@@ -377,11 +377,7 @@ const MainLayout = () => {
               </Link>
             );
           })}
-          <button onClick={() => handleComingSoon('More Options')}
-            className="px-4 py-3 transition-colors hover:text-purple-400"
-            style={{ color: '#4b5563' }}>
-            <MoreVertical size={15} />
-          </button>
+
         </div>
       </nav>
 
