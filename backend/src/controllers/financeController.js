@@ -65,10 +65,23 @@ exports.updateCategoryBudget = async (req, res) => {
 
     let targetId = category.id;
     if (category.user_id === null) {
-      const newCat = await prisma.category.create({
-        data: { name: category.name, type: category.type, user_id: req.user.id, ...dataToUpdate }
+      // Check if user already has a custom category for this global one
+      let userCat = await prisma.category.findFirst({
+        where: { name: category.name, type: category.type, user_id: req.user.id }
       });
-      targetId = newCat.id;
+      
+      if (userCat) {
+        await prisma.category.update({
+          where: { id: userCat.id },
+          data: dataToUpdate
+        });
+        targetId = userCat.id;
+      } else {
+        const newCat = await prisma.category.create({
+          data: { name: category.name, type: category.type, user_id: req.user.id, ...dataToUpdate }
+        });
+        targetId = newCat.id;
+      }
     } else {
       await prisma.category.update({
         where: { id: targetId },
@@ -208,12 +221,17 @@ exports.addExpense = async (req, res) => {
     }
 
     let actualCategory = await prisma.category.findFirst({
-      where: { name: category_id, type: 'expense', OR: [{ user_id: req.user.id }, { user_id: null }] }
+      where: { name: category_id, type: 'expense', user_id: req.user.id }
     });
     if (!actualCategory) {
-      actualCategory = await prisma.category.create({
-        data: { name: category_id, type: 'expense', user_id: req.user.id }
+      actualCategory = await prisma.category.findFirst({
+        where: { name: category_id, type: 'expense', user_id: null }
       });
+      if (!actualCategory) {
+        actualCategory = await prisma.category.create({
+          data: { name: category_id, type: 'expense', user_id: req.user.id }
+        });
+      }
     }
 
     const expense = await prisma.expense.create({

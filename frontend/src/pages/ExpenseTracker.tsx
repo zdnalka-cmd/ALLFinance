@@ -105,7 +105,9 @@ const ExpenseTracker = () => {
     e.preventDefault();
     
     // Check Budget Exceed
-    const category = categories.find((c: any) => c.name.toLowerCase() === formData.category_id.toLowerCase() || c.id === formData.category_id);
+    const matchedCategories = categories.filter((c: any) => c.name.toLowerCase() === formData.category_id.toLowerCase() || c.id === formData.category_id);
+    const category = matchedCategories.find((c: any) => c.budget_limit) || matchedCategories[0];
+
     if (category && category.budget_limit) {
       const normalizeStart = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
       const normalizeEnd = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
