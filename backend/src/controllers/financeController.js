@@ -241,12 +241,17 @@ exports.addExpense = async (req, res) => {
     if (actualCategory.budget_limit) {
       const budgetLimit = parseFloat(actualCategory.budget_limit);
       const expenseDate = new Date(transaction_date);
+      const normalizedExpenseDate = new Date(expenseDate.getFullYear(), expenseDate.getMonth(), expenseDate.getDate(), 12, 0, 0);
       
       let startDate = actualCategory.budget_start_date ? new Date(actualCategory.budget_start_date) : new Date(expenseDate.getFullYear(), expenseDate.getMonth(), 1);
       let endDate = actualCategory.budget_end_date ? new Date(actualCategory.budget_end_date) : new Date(expenseDate.getFullYear(), expenseDate.getMonth() + 1, 0);
 
+      // Normalize bounds
+      startDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), 0, 0, 0);
+      endDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59);
+
       // Only check if expense date is within budget range
-      if (expenseDate >= startDate && expenseDate <= endDate) {
+      if (normalizedExpenseDate >= startDate && normalizedExpenseDate <= endDate) {
         const periodExpenses = await prisma.expense.aggregate({
           _sum: { amount: true },
           where: {
