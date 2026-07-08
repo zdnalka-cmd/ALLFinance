@@ -1,0 +1,109 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@layer base {
+  :root {
+    --background: 0 0% 5%;
+    --foreground: 0 0% 95%;
+    --card: 270 15% 8%;
+    --card-foreground: 0 0% 95%;
+    --popover: 270 15% 8%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 270 85% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 270 15% 15%;
+    --secondary-foreground: 0 0% 90%;
+    --muted: 270 10% 15%;
+    --muted-foreground: 270 10% 60%;
+    --accent: 270 85% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 270 15% 18%;
+    --input: 270 15% 18%;
+    --ring: 270 85% 60%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: #0a0a0f;
+    color: #f0f0f5;
+  }
+  input, select, textarea {
+    @apply bg-[#0d0d1a] text-white placeholder-gray-500;
+    color-scheme: dark;
+  }
+}
+
+/* ── Global scrollbar styling ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0f0f17;
+}
+::-webkit-scrollbar-thumb {
+  background: #3b1f8c;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6d28d9;
+}
+
+/* ── Dark card utility ── */
+.dark-card {
+  background: linear-gradient(135deg, #111120 0%, #0d0d1a 100%);
+  border: 1px solid rgba(134, 59, 255, 0.15);
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+/* ── Hide scrollbar utility ── */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Subtle glow on focus ── */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(134, 59, 255, 0.4);
+}
+
+/* ── Purple glow button effect ── */
+.btn-purple {
+  background: linear-gradient(135deg, #7c3aed, #863bff);
+  box-shadow: 0 4px 15px rgba(134, 59, 255, 0.35);
+  transition: all 0.2s ease;
+}
+.btn-purple:hover {
+  box-shadow: 0 6px 20px rgba(134, 59, 255, 0.55);
+  transform: translateY(-1px);
+}
+
+/* ── Table row hover ── */
+.dark-table tr:hover td {
+  background: rgba(134, 59, 255, 0.06) !important;
+}
+
+/* ── Smooth page transitions ── */
+main > * {
+  animation: fadeIn 0.25s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
