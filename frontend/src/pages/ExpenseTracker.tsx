@@ -169,7 +169,7 @@ const ExpenseTracker = () => {
                     <td className="px-6 py-4 text-gray-400">{row.note}</td>
                     <td className="px-6 py-4">
                       {row.receipt ? (
-                        <button onClick={(e) => { e.stopPropagation(); setViewImageUrl(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${row.receipt}`); }} className="text-purple-400 hover:text-purple-300 flex items-center gap-1 text-xs font-bold">
+                        <button onClick={(e) => { e.stopPropagation(); setViewImageUrl(row.receipt.startsWith('data:') ? row.receipt : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${row.receipt}`); }} className="text-purple-400 hover:text-purple-300 flex items-center gap-1 text-xs font-bold">
                           <ImageIcon size={14} /> Lihat
                         </button>
                       ) : <span className="text-gray-500">-</span>}

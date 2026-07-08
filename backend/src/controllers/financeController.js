@@ -137,7 +137,11 @@ exports.getExpenses = async (req, res) => {
 exports.addExpense = async (req, res) => {
   try {
     let { amount, category_id, note, transaction_date } = req.body; // category_id from frontend will be the category name (e.g. 'food')
-    let receiptUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    let receiptUrl = null;
+    if (req.file) {
+      const b64 = Buffer.from(req.file.buffer).toString('base64');
+      receiptUrl = `data:${req.file.mimetype};base64,${b64}`;
+    }
 
     let actualCategory = await prisma.category.findFirst({
       where: { name: category_id, type: 'expense', OR: [{ user_id: req.user.id }, { user_id: null }] }
