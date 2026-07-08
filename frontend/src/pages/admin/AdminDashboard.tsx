@@ -194,7 +194,7 @@ const AdminDashboard = () => {
                     <YAxis stroke="#64748b" fontSize={12} width={80} tickFormatter={(value) => `Rp${(value/1000000).toFixed(0)}M`} />
                     <RechartsTooltip 
                       contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#fff' }}
-                      formatter={(value: number) => formatCurrency(value)}
+                      formatter={(value: any) => formatCurrency(value)}
                     />
                     <Legend />
                     <Line type="monotone" dataKey="Pemasukan" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
@@ -218,7 +218,7 @@ const AdminDashboard = () => {
                     <RechartsTooltip 
                       contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#fff' }}
                       itemStyle={{ color: '#e2e8f0' }}
-                      formatter={(value: number) => [`${value} kali digunakan`, 'Total Penggunaan']}
+                      formatter={(value: any) => [`${value} kali digunakan`, 'Total Penggunaan']}
                     />
                     <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                       {categories.map((entry, index) => {

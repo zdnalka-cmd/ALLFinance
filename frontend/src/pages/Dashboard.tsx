@@ -234,10 +234,13 @@ const Dashboard = () => {
                   <Pie data={expenseCatData} cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={2} dataKey="value" nameKey="displayName" stroke="none">
                     {expenseCatData.map((entry, index) => <Cell key={`cat-${index}`} fill={entry.color} />)}
                   </Pie>
-                  <RechartsTooltip
-                    formatter={(value: number, _name: string, props: any) => [formatCurrency(value), props.payload?.displayName ?? _name]}
-                    contentStyle={{ borderRadius: '12px', border: '1px solid rgba(134,59,255,0.3)', background: '#0d0d1a', color: '#e9d5ff', boxShadow: '0 10px 30px rgba(0,0,0,0.6)', fontSize: 11 }}
-                  />
+                    <RechartsTooltip
+                      formatter={(value: any, name: any) => [
+                        formatCurrency(value),
+                        name === 'Pemasukan' ? t('income') : t('expense')
+                      ]}
+                      contentStyle={{ borderRadius: '12px', border: '1px solid rgba(134,59,255,0.3)', background: '#0d0d1a', color: '#e9d5ff', boxShadow: '0 10px 30px rgba(0,0,0,0.6)', fontSize: 11 }}
+                    />
                 </PieChart>
               </ResponsiveContainer>
             </div>
