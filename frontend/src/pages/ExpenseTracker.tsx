@@ -22,15 +22,7 @@ const ExpenseTracker = () => {
   const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
   const [deletePassword, setDeletePassword] = useState('');
 
-  const [budgetModalOpen, setBudgetModalOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<any>(null);
-  const [budgetAmount, setBudgetAmount] = useState('');
-  const [budgetName, setBudgetName] = useState('');
-  const [budgetDuration, setBudgetDuration] = useState('30');
-  const [budgetCustomDuration, setBudgetCustomDuration] = useState('');
 
-  const [exceedModalOpen, setExceedModalOpen] = useState(false);
-  const [pendingExpenseData, setPendingExpenseData] = useState<any>(null);
 
   const fetchData = async () => {
     try {
@@ -52,41 +44,25 @@ const ExpenseTracker = () => {
     fetchData();
   }, []);
 
-  const handleAction = (action: string) => {
-    toast(`${action} akan segera hadir!`, { icon: '🚧' });
-  };
 
-  const handleSetBudget = async (e: React.FormEvent) => {
+
+  const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedCategory) return;
+    
     try {
-      let duration = budgetDuration;
-      if (duration === 'custom') {
-        duration = budgetCustomDuration;
-      }
-      await axiosInstance.put(`/finance/categories/${selectedCategory.id}/budget`, {
-        budget_limit: budgetAmount,
-        budget_name: budgetName,
-        duration_days: duration
-      });
-      toast.success('Anggaran berhasil disimpan');
-      setBudgetModalOpen(false);
-      fetchData();
-    } catch (error: any) {
-      console.error('Budget error:', error.response?.data || error);
-      toast.error('Gagal menyimpan: ' + (error.response?.data?.message || error.response?.data?.error || error.message));
-    }
-  };
-
-  const processAddExpense = async (dataToSubmit: FormData) => {
-    try {
-      await axiosInstance.post('/finance/expenses', dataToSubmit, {
+      const data = new FormData();
+      data.append('amount', formData.amount);
+      data.append('category_id', formData.category_id);
+      data.append('note', formData.note);
+      data.append('transaction_date', formData.transaction_date);
+      if (receiptFile) data.append('receipt', receiptFile);
+      
+      await axiosInstance.post('/finance/expenses', data, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
+      
       toast.success('Pengeluaran berhasil ditambahkan!');
       setIsModalOpen(false);
-      setExceedModalOpen(false);
-      setPendingExpenseData(null);
       setFormData({
         amount: '',
         category_id: '',
@@ -98,73 +74,6 @@ const ExpenseTracker = () => {
     } catch (error: any) {
       console.error('Error:', error);
       toast.error('Gagal mencatat pengeluaran: ' + (error.response?.data?.message || error.message));
-    }
-  };
-
-  const handleAddExpense = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Check Budget Exceed
-    const matchedCategories = categories.filter((c: any) => c.name.toLowerCase() === formData.category_id.toLowerCase() || c.id === formData.category_id);
-    const category = matchedCategories.find((c: any) => c.budget_limit) || matchedCategories[0];
-
-    if (category && category.budget_limit) {
-      const normalizeStart = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
-      const normalizeEnd = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
-
-      const startDate = category.budget_start_date ? normalizeStart(new Date(category.budget_start_date)) : normalizeStart(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-      const endDate = category.budget_end_date ? normalizeEnd(new Date(category.budget_end_date)) : normalizeEnd(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0));
-      
-      const d = new Date(formData.transaction_date);
-      const normalizedD = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0);
-      
-      if (normalizedD >= startDate && normalizedD <= endDate) {
-        const currentPeriodExpenses = expenses.filter((e: any) => {
-          const expD = new Date(e.transaction_date);
-          const normalizedExpD = new Date(expD.getFullYear(), expD.getMonth(), expD.getDate(), 12, 0, 0);
-          return e.category_id === category.id && normalizedExpD >= startDate && normalizedExpD <= endDate;
-        }).reduce((sum, e: any) => sum + Number(e.amount), 0);
-        
-        const newTotal = currentPeriodExpenses + Number(formData.amount);
-        if (newTotal > Number(category.budget_limit)) {
-          // Prepare data
-          const data = new FormData();
-          data.append('amount', formData.amount);
-          data.append('category_id', formData.category_id);
-          data.append('note', formData.note);
-          data.append('transaction_date', formData.transaction_date);
-          if (receiptFile) data.append('receipt', receiptFile);
-          
-          setPendingExpenseData({ formData: data, categoryId: category.id });
-          setExceedModalOpen(true);
-          return; // Stop execution, wait for confirmation
-        }
-      }
-    }
-
-    // No exceed, proceed normally
-    const data = new FormData();
-    data.append('amount', formData.amount);
-    data.append('category_id', formData.category_id);
-    data.append('note', formData.note);
-    data.append('transaction_date', formData.transaction_date);
-    if (receiptFile) data.append('receipt', receiptFile);
-    
-    await processAddExpense(data);
-  };
-
-  const handleConfirmExceed = async () => {
-    if (!pendingExpenseData) return;
-    try {
-      // 1. Delete budget limit (auto clear because it's failed to maintain)
-      await axiosInstance.put(`/finance/categories/${pendingExpenseData.categoryId}/budget`, {
-        budget_limit: '' // Empty string will nullify it based on backend logic
-      });
-      // 2. Add expense
-      await processAddExpense(pendingExpenseData.formData);
-    } catch (error) {
-      toast.error('Gagal menghapus batas anggaran.');
-      setExceedModalOpen(false);
     }
   };
 
@@ -223,83 +132,7 @@ const ExpenseTracker = () => {
         </div>
       </div>
 
-      {/* Budget Section */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-black text-white tracking-tight uppercase text-xs text-gray-400">Batas Pengeluaran</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {categories.map((cat: any) => {
-            if (!cat.budget_limit) return null;
-            
-            const normalizeStart = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
-            const normalizeEnd = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
 
-            const startDate = cat.budget_start_date ? normalizeStart(new Date(cat.budget_start_date)) : normalizeStart(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-            const endDate = cat.budget_end_date ? normalizeEnd(new Date(cat.budget_end_date)) : normalizeEnd(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0));
-            
-            const currentPeriodExpenses = expenses.filter((e: any) => {
-              const d = new Date(e.transaction_date);
-              const normalizedD = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0); // safe middle of day
-              return e.category_id === cat.id && normalizedD >= startDate && normalizedD <= endDate;
-            }).reduce((sum, e: any) => sum + Number(e.amount), 0);
-            
-            const budgetLimit = Number(cat.budget_limit);
-            const percentage = Math.min(100, Math.round((currentPeriodExpenses / budgetLimit) * 100));
-            const isWarning = percentage >= 80;
-            const isDanger = percentage >= 100;
-            
-            let remainingDaysText = '';
-            if (cat.budget_end_date) {
-              const diffTime = Math.max(0, new Date(cat.budget_end_date).getTime() - new Date().getTime());
-              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-              remainingDaysText = diffDays > 0 ? `Sisa ${diffDays} Hari` : 'Hari Terakhir';
-            }
-            
-            return (
-              <div key={cat.id} onClick={() => { 
-                  setSelectedCategory(cat); 
-                  setBudgetAmount(cat.budget_limit); 
-                  setBudgetName(cat.budget_name || '');
-                  setBudgetDuration('30');
-                  setBudgetModalOpen(true); 
-                }} className="rounded-xl border border-white/10 bg-[#111120] p-4 cursor-pointer hover:border-purple-500/50 transition-colors relative">
-                
-                {remainingDaysText && (
-                  <span className="absolute top-4 right-4 text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-bold">
-                    {remainingDaysText}
-                  </span>
-                )}
-                
-                <div className="flex flex-col mb-3">
-                  <span className="font-black text-white text-base leading-tight mb-0.5">{cat.budget_name || 'Batas Pengeluaran'}</span>
-                  <span className="text-xs font-bold text-gray-500">{cat.name}</span>
-                </div>
-                
-                <div className="w-full bg-gray-800 rounded-full h-2.5 mb-2 overflow-hidden shadow-inner">
-                  <div className={`h-2.5 rounded-full ${isDanger ? 'bg-red-500' : isWarning ? 'bg-orange-500' : 'bg-purple-500'}`} style={{ width: `${percentage}%` }}></div>
-                </div>
-                <div className="flex justify-between items-center text-xs font-bold text-gray-500">
-                  <span className={isDanger ? 'text-red-400' : 'text-gray-400'}>Terpakai: {formatCurrency(currentPeriodExpenses)}</span>
-                  <span className="text-white">Batas: {formatCurrency(budgetLimit)}</span>
-                </div>
-              </div>
-            );
-          })}
-          
-          <button onClick={() => { 
-              setSelectedCategory(categories[0]); 
-              setBudgetAmount(''); 
-              setBudgetName('');
-              setBudgetDuration('30');
-              setBudgetCustomDuration('');
-              setBudgetModalOpen(true); 
-            }} className="rounded-xl border border-dashed border-white/20 bg-transparent p-4 flex flex-col items-center justify-center text-gray-400 hover:text-white hover:border-white/50 transition-colors h-full min-h-[120px]">
-            <Plus size={20} className="mb-1" />
-            <span className="text-xs font-bold">Buat Batas Pengeluaran</span>
-          </button>
-        </div>
-      </div>
 
       {/* Table Section */}
       <div className="rounded-xl border border-white/10 bg-[#111120] shadow-none overflow-hidden flex flex-col">
@@ -476,107 +309,7 @@ const ExpenseTracker = () => {
         </div>
       )}
 
-      {/* Budget Exceed Confirmation Modal */}
-      {exceedModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl bg-[#111120] p-6 shadow-xl border border-orange-500/30">
-            <div className="flex items-center gap-3 mb-4 text-orange-500">
-              <div className="p-3 bg-orange-500/10 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-              </div>
-              <h2 className="text-xl font-black text-white">Peringatan Anggaran</h2>
-            </div>
-            <p className="text-sm text-gray-300 font-medium mb-6 leading-relaxed">
-              Batasan Anda akan tidak tercapai. Apakah Anda yakin ingin melanjutkan penyimpanan pengeluaran ini?
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button 
-                type="button" 
-                onClick={() => {
-                  setExceedModalOpen(false);
-                  setPendingExpenseData(null);
-                }} 
-                className="rounded-lg px-5 py-2.5 text-sm font-bold text-gray-300 hover:bg-white/10 transition-colors"
-              >
-                Batal
-              </button>
-              <button 
-                type="button" 
-                onClick={handleConfirmExceed}
-                className="rounded-lg bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-orange-600 transition-colors"
-              >
-                Oke, Lanjutkan
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Budget Setting Modal */}
-      {budgetModalOpen && selectedCategory && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-[#111120] p-6 shadow-xl border border-white/10">
-            <h2 className="text-xl font-black text-white mb-2">Atur Batas Pengeluaran</h2>
-            <p className="text-sm text-gray-400 font-medium mb-6">Untuk kategori <span className="text-white font-bold">{selectedCategory.name}</span></p>
-            <form onSubmit={handleSetBudget} className="flex flex-col gap-4">
-              <div>
-                <label className="block text-sm font-bold text-gray-300 mb-1.5">Nama Target (Opsional)</label>
-                <input 
-                  type="text" 
-                  value={budgetName}
-                  onChange={e => setBudgetName(e.target.value)}
-                  className="w-full rounded-lg border border-white/15 bg-white/5 p-2.5 text-sm font-medium focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 text-white"
-                  placeholder="cth. Liburan Bali, Uang Makan"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-gray-300 mb-1.5">Batas Anggaran (Rp)</label>
-                <input 
-                  type="number" 
-                  value={budgetAmount}
-                  onChange={e => setBudgetAmount(e.target.value)}
-                  className="w-full rounded-lg border border-white/15 bg-white/5 p-2.5 text-sm font-medium focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 text-white"
-                  placeholder="Kosongkan untuk menghapus batas"
-                />
-              </div>
-              {budgetAmount && (
-                <>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-300 mb-1.5">Durasi Waktu</label>
-                    <select 
-                      value={budgetDuration}
-                      onChange={e => setBudgetDuration(e.target.value)}
-                      className="w-full rounded-lg border border-white/15 bg-[#111120] p-2.5 text-sm font-medium focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 text-white"
-                    >
-                      <option value="3">3 Hari</option>
-                      <option value="7">1 Minggu</option>
-                      <option value="30">1 Bulan</option>
-                      <option value="custom">Bikin Sendiri (Kustom)</option>
-                    </select>
-                  </div>
-                  {budgetDuration === 'custom' && (
-                    <div>
-                      <label className="block text-sm font-bold text-gray-300 mb-1.5">Jumlah Hari</label>
-                      <input 
-                        type="number" 
-                        value={budgetCustomDuration}
-                        onChange={e => setBudgetCustomDuration(e.target.value)}
-                        required
-                        className="w-full rounded-lg border border-white/15 bg-white/5 p-2.5 text-sm font-medium focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 text-white"
-                        placeholder="Masukkan jumlah hari (cth. 14)"
-                      />
-                    </div>
-                  )}
-                </>
-              )}
-              <div className="mt-4 flex gap-3 justify-end">
-                <button type="button" onClick={() => setBudgetModalOpen(false)} className="rounded-lg px-4 py-2 text-sm font-bold text-gray-300 hover:bg-[#1a1a2e]">Batal</button>
-                <button type="submit" className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-purple-700 transition-colors">Simpan Anggaran</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
     </div>
   );
