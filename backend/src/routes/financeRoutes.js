@@ -12,6 +12,7 @@ const upload = multer({ storage: storage });
 router.use(authMiddleware);
 
 router.get('/categories', financeController.getCategories);
+router.put('/categories/:id/budget', financeController.updateCategoryBudget);
 
 router.route('/incomes')
   .get(financeController.getIncomes)

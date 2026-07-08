@@ -25,6 +25,9 @@ const ExpenseTracker = () => {
   const [budgetModalOpen, setBudgetModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<any>(null);
   const [budgetAmount, setBudgetAmount] = useState('');
+  const [budgetName, setBudgetName] = useState('');
+  const [budgetDuration, setBudgetDuration] = useState('30');
+  const [budgetCustomDuration, setBudgetCustomDuration] = useState('');
 
   const fetchData = async () => {
     try {
@@ -54,8 +57,14 @@ const ExpenseTracker = () => {
     e.preventDefault();
     if (!selectedCategory) return;
     try {
+      let duration = budgetDuration;
+      if (duration === 'custom') {
+        duration = budgetCustomDuration;
+      }
       await axiosInstance.put(`/finance/categories/${selectedCategory.id}/budget`, {
-        budget_limit: budgetAmount
+        budget_limit: budgetAmount,
+        budget_name: budgetName,
+        duration_days: duration
       });
       toast.success('Anggaran berhasil disimpan');
       setBudgetModalOpen(false);
@@ -154,43 +163,73 @@ const ExpenseTracker = () => {
       {/* Budget Section */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-black text-white tracking-tight uppercase text-xs text-gray-400">Anggaran Kategori (Bulan Ini)</h2>
+          <h2 className="text-base font-black text-white tracking-tight uppercase text-xs text-gray-400">Batas Pengeluaran</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {categories.map((cat: any) => {
             if (!cat.budget_limit) return null;
             
-            const currentMonthExpenses = expenses.filter((e: any) => {
+            const startDate = cat.budget_start_date ? new Date(cat.budget_start_date) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+            const endDate = cat.budget_end_date ? new Date(cat.budget_end_date) : new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+            
+            const currentPeriodExpenses = expenses.filter((e: any) => {
               const d = new Date(e.transaction_date);
-              const now = new Date();
-              return e.category_id === cat.id && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+              return e.category_id === cat.id && d >= startDate && d <= endDate;
             }).reduce((sum, e: any) => sum + Number(e.amount), 0);
             
             const budgetLimit = Number(cat.budget_limit);
-            const percentage = Math.min(100, Math.round((currentMonthExpenses / budgetLimit) * 100));
+            const percentage = Math.min(100, Math.round((currentPeriodExpenses / budgetLimit) * 100));
             const isWarning = percentage >= 80;
             const isDanger = percentage >= 100;
             
+            let remainingDaysText = '';
+            if (cat.budget_end_date) {
+              const diffTime = Math.max(0, new Date(cat.budget_end_date).getTime() - new Date().getTime());
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              remainingDaysText = diffDays > 0 ? `Sisa ${diffDays} Hari` : 'Hari Terakhir';
+            }
+            
             return (
-              <div key={cat.id} onClick={() => { setSelectedCategory(cat); setBudgetAmount(cat.budget_limit); setBudgetModalOpen(true); }} className="rounded-xl border border-white/10 bg-[#111120] p-4 cursor-pointer hover:border-purple-500/50 transition-colors">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-bold text-white text-sm">{cat.name}</span>
-                  <span className="text-xs font-black text-gray-400">{percentage}%</span>
+              <div key={cat.id} onClick={() => { 
+                  setSelectedCategory(cat); 
+                  setBudgetAmount(cat.budget_limit); 
+                  setBudgetName(cat.budget_name || '');
+                  setBudgetDuration('30');
+                  setBudgetModalOpen(true); 
+                }} className="rounded-xl border border-white/10 bg-[#111120] p-4 cursor-pointer hover:border-purple-500/50 transition-colors relative">
+                
+                {remainingDaysText && (
+                  <span className="absolute top-4 right-4 text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-bold">
+                    {remainingDaysText}
+                  </span>
+                )}
+                
+                <div className="flex flex-col mb-3">
+                  <span className="font-black text-white text-base leading-tight mb-0.5">{cat.budget_name || 'Batas Pengeluaran'}</span>
+                  <span className="text-xs font-bold text-gray-500">{cat.name}</span>
                 </div>
-                <div className="w-full bg-gray-800 rounded-full h-2 mb-2 overflow-hidden">
-                  <div className={`h-2 rounded-full ${isDanger ? 'bg-red-500' : isWarning ? 'bg-orange-500' : 'bg-purple-500'}`} style={{ width: `${percentage}%` }}></div>
+                
+                <div className="w-full bg-gray-800 rounded-full h-2.5 mb-2 overflow-hidden shadow-inner">
+                  <div className={`h-2.5 rounded-full ${isDanger ? 'bg-red-500' : isWarning ? 'bg-orange-500' : 'bg-purple-500'}`} style={{ width: `${percentage}%` }}></div>
                 </div>
-                <div className="flex justify-between text-xs font-bold text-gray-500">
-                  <span>Terpakai: {formatCurrency(currentMonthExpenses)}</span>
-                  <span>Batas: {formatCurrency(budgetLimit)}</span>
+                <div className="flex justify-between items-center text-xs font-bold text-gray-500">
+                  <span className={isDanger ? 'text-red-400' : 'text-gray-400'}>Terpakai: {formatCurrency(currentPeriodExpenses)}</span>
+                  <span className="text-white">Batas: {formatCurrency(budgetLimit)}</span>
                 </div>
               </div>
             );
           })}
           
-          <button onClick={() => { setSelectedCategory(categories[0]); setBudgetAmount(''); setBudgetModalOpen(true); }} className="rounded-xl border border-dashed border-white/20 bg-transparent p-4 flex flex-col items-center justify-center text-gray-400 hover:text-white hover:border-white/50 transition-colors h-full min-h-[100px]">
+          <button onClick={() => { 
+              setSelectedCategory(categories[0]); 
+              setBudgetAmount(''); 
+              setBudgetName('');
+              setBudgetDuration('30');
+              setBudgetCustomDuration('');
+              setBudgetModalOpen(true); 
+            }} className="rounded-xl border border-dashed border-white/20 bg-transparent p-4 flex flex-col items-center justify-center text-gray-400 hover:text-white hover:border-white/50 transition-colors h-full min-h-[120px]">
             <Plus size={20} className="mb-1" />
-            <span className="text-xs font-bold">Atur Anggaran Baru</span>
+            <span className="text-xs font-bold">Buat Batas Pengeluaran</span>
           </button>
         </div>
       </div>
@@ -374,9 +413,19 @@ const ExpenseTracker = () => {
       {budgetModalOpen && selectedCategory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="w-full max-w-sm rounded-2xl bg-[#111120] p-6 shadow-xl border border-white/10">
-            <h2 className="text-xl font-black text-white mb-2">Atur Anggaran Bulanan</h2>
-            <p className="text-sm text-gray-400 font-medium mb-6">Batas maksimal pengeluaran untuk kategori <span className="text-white font-bold">{selectedCategory.name}</span></p>
+            <h2 className="text-xl font-black text-white mb-2">Atur Batas Pengeluaran</h2>
+            <p className="text-sm text-gray-400 font-medium mb-6">Untuk kategori <span className="text-white font-bold">{selectedCategory.name}</span></p>
             <form onSubmit={handleSetBudget} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-300 mb-1.5">Nama Target (Opsional)</label>
+                <input 
+                  type="text" 
+                  value={budgetName}
+                  onChange={e => setBudgetName(e.target.value)}
+                  className="w-full rounded-lg border border-white/15 bg-white/5 p-2.5 text-sm font-medium focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 text-white"
+                  placeholder="cth. Liburan Bali, Uang Makan"
+                />
+              </div>
               <div>
                 <label className="block text-sm font-bold text-gray-300 mb-1.5">Batas Anggaran (Rp)</label>
                 <input 
@@ -384,12 +433,42 @@ const ExpenseTracker = () => {
                   value={budgetAmount}
                   onChange={e => setBudgetAmount(e.target.value)}
                   className="w-full rounded-lg border border-white/15 bg-white/5 p-2.5 text-sm font-medium focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 text-white"
-                  placeholder="cth. 500000 (Kosongkan untuk menghapus batas)"
+                  placeholder="Kosongkan untuk menghapus batas"
                 />
               </div>
+              {budgetAmount && (
+                <>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-300 mb-1.5">Durasi Waktu</label>
+                    <select 
+                      value={budgetDuration}
+                      onChange={e => setBudgetDuration(e.target.value)}
+                      className="w-full rounded-lg border border-white/15 bg-[#111120] p-2.5 text-sm font-medium focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 text-white"
+                    >
+                      <option value="3">3 Hari</option>
+                      <option value="7">1 Minggu</option>
+                      <option value="30">1 Bulan</option>
+                      <option value="custom">Bikin Sendiri (Kustom)</option>
+                    </select>
+                  </div>
+                  {budgetDuration === 'custom' && (
+                    <div>
+                      <label className="block text-sm font-bold text-gray-300 mb-1.5">Jumlah Hari</label>
+                      <input 
+                        type="number" 
+                        value={budgetCustomDuration}
+                        onChange={e => setBudgetCustomDuration(e.target.value)}
+                        required
+                        className="w-full rounded-lg border border-white/15 bg-white/5 p-2.5 text-sm font-medium focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 text-white"
+                        placeholder="Masukkan jumlah hari (cth. 14)"
+                      />
+                    </div>
+                  )}
+                </>
+              )}
               <div className="mt-4 flex gap-3 justify-end">
                 <button type="button" onClick={() => setBudgetModalOpen(false)} className="rounded-lg px-4 py-2 text-sm font-bold text-gray-300 hover:bg-[#1a1a2e]">Batal</button>
-                <button type="submit" className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-purple-700">Simpan Anggaran</button>
+                <button type="submit" className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-purple-700 transition-colors">Simpan Anggaran</button>
               </div>
             </form>
           </div>

@@ -4,6 +4,22 @@ const bcrypt = require('bcrypt');
 // --- Categories ---
 exports.getCategories = async (req, res) => {
   try {
+    const now = new Date();
+    await prisma.category.updateMany({
+      where: {
+        user_id: req.user.id,
+        budget_end_date: {
+          lt: now
+        }
+      },
+      data: {
+        budget_limit: null,
+        budget_name: null,
+        budget_start_date: null,
+        budget_end_date: null
+      }
+    });
+
     const categories = await prisma.category.findMany({
       where: {
         OR: [
@@ -13,6 +29,54 @@ exports.getCategories = async (req, res) => {
       }
     });
     res.json(categories);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.updateCategoryBudget = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { budget_limit, budget_name, duration_days } = req.body;
+    
+    const category = await prisma.category.findFirst({
+      where: { id, OR: [{ user_id: req.user.id }, { user_id: null }] }
+    });
+
+    if (!category) return res.status(404).json({ message: 'Kategori tidak ditemukan' });
+
+    let budget_start_date = null;
+    let budget_end_date = null;
+
+    if (budget_limit) {
+      budget_start_date = new Date();
+      if (duration_days) {
+        budget_end_date = new Date();
+        budget_end_date.setDate(budget_end_date.getDate() + parseInt(duration_days));
+      }
+    }
+
+    const dataToUpdate = {
+      budget_limit: budget_limit ? parseFloat(budget_limit) : null,
+      budget_name: budget_limit ? budget_name : null,
+      budget_start_date: budget_limit ? budget_start_date : null,
+      budget_end_date: budget_limit ? budget_end_date : null
+    };
+
+    let targetId = category.id;
+    if (category.user_id === null) {
+      const newCat = await prisma.category.create({
+        data: { name: category.name, type: category.type, user_id: req.user.id, ...dataToUpdate }
+      });
+      targetId = newCat.id;
+    } else {
+      await prisma.category.update({
+        where: { id: targetId },
+        data: dataToUpdate
+      });
+    }
+
+    res.json({ message: 'Anggaran berhasil diperbarui', categoryId: targetId });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -172,6 +236,52 @@ exports.addExpense = async (req, res) => {
         type: 'expense'
       }
     });
+
+    // Check Budget Limit
+    if (actualCategory.budget_limit) {
+      const budgetLimit = parseFloat(actualCategory.budget_limit);
+      const expenseDate = new Date(transaction_date);
+      
+      let startDate = actualCategory.budget_start_date ? new Date(actualCategory.budget_start_date) : new Date(expenseDate.getFullYear(), expenseDate.getMonth(), 1);
+      let endDate = actualCategory.budget_end_date ? new Date(actualCategory.budget_end_date) : new Date(expenseDate.getFullYear(), expenseDate.getMonth() + 1, 0);
+
+      // Only check if expense date is within budget range
+      if (expenseDate >= startDate && expenseDate <= endDate) {
+        const periodExpenses = await prisma.expense.aggregate({
+          _sum: { amount: true },
+          where: {
+            user_id: req.user.id,
+            category_id: actualCategory.id,
+            transaction_date: {
+              gte: startDate,
+              lte: endDate
+            }
+          }
+        });
+
+        const totalSpent = parseFloat(periodExpenses._sum.amount || 0);
+        const previousTotal = totalSpent - parseFloat(amount);
+        const budgetNameStr = actualCategory.budget_name ? `"${actualCategory.budget_name}"` : actualCategory.name;
+
+        if (totalSpent >= budgetLimit && previousTotal < budgetLimit) {
+          await prisma.notification.create({
+            data: {
+              user_id: req.user.id,
+              message: `Anggaran Terlampaui: Pengeluaran ${budgetNameStr} telah mencapai 100% dari batas (Rp ${budgetLimit.toLocaleString('id-ID')}).`,
+              type: 'budget_alert'
+            }
+          });
+        } else if (totalSpent >= budgetLimit * 0.8 && previousTotal < budgetLimit * 0.8) {
+          await prisma.notification.create({
+            data: {
+              user_id: req.user.id,
+              message: `Peringatan Anggaran: Pengeluaran ${budgetNameStr} telah mencapai 80% dari batas (Rp ${budgetLimit.toLocaleString('id-ID')}).`,
+              type: 'budget_alert'
+            }
+          });
+        }
+      }
+    }
 
     res.status(201).json(expense);
   } catch (error) {

@@ -71,10 +71,14 @@ model Supplier {
 model Category {
   id         String    @id @default(uuid())
   user_id    String?
-  name       String
-  type       String    // income or expense
-  incomes    Income[]
-  expenses   Expense[]
+  name              String
+  type              String    // income or expense
+  budget_limit      Decimal?
+  budget_name       String?
+  budget_start_date DateTime?
+  budget_end_date   DateTime?
+  incomes           Income[]
+  expenses          Expense[]
 
   user       User?      @relation(fields: [user_id], references: [id])
 }
