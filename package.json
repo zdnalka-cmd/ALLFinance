@@ -1,0 +1,7 @@
+{
+  "name": "allfinance-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "cd backend && npm install && npx prisma generate && npm start"
+  }
+}
