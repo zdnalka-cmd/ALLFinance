@@ -61,7 +61,8 @@ const ExpenseTracker = () => {
       setBudgetModalOpen(false);
       fetchData();
     } catch (error: any) {
-      toast.error('Gagal menyimpan anggaran');
+      console.error('Budget error:', error.response?.data || error);
+      toast.error('Gagal menyimpan: ' + (error.response?.data?.message || error.response?.data?.error || error.message));
     }
   };
 
