@@ -139,11 +139,10 @@ const Dashboard = () => {
       {/* Metric Cards */}
       <div className="mb-6">
         <h2 className="text-base font-black text-white tracking-tight mb-4 uppercase text-xs text-gray-400">{t('all_totals')}</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <MetricCard title={t('total_income')} value={formatCurrency(dashboardData?.totals?.totalRevenue || 0)} subtext={t('income_ytd')} />
           <MetricCard title={t('total_expense')} value={formatCurrency(dashboardData?.totals?.totalExpenses || 0)} subtext={t('expense_ytd')} />
           <MetricCard title={t('net_profit')} value={formatCurrency(dashboardData?.totals?.netProfit || 0)} />
-          <MetricCard title={t('gross_profit')} value={formatCurrency(dashboardData?.totals?.grossProfit || 0)} />
         </div>
       </div>
 
@@ -171,30 +170,8 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Bottom: 3 columns — Line Chart | Income vs Expense Donut | Expense Category Donut */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* Line Chart: Gross Profit */}
-        <div className="rounded-xl border border-white/10 bg-[#111120] p-6 flex flex-col">
-          <h3 className="font-black text-white mb-1 text-sm">{t('gross_profit_12m')}</h3>
-          <div className="flex flex-wrap gap-4 mb-4 text-xs font-bold uppercase tracking-wider text-gray-400">
-            <div className="flex items-center gap-2"><div className="h-0.5 w-4 bg-[#863bff]" />{t('gross_profit_line')}</div>
-            <div className="flex items-center gap-2"><div className="h-0.5 w-4 bg-[#10b981]" />{t('gross_margin')}</div>
-          </div>
-          <div className="h-52 w-full flex-1">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={composedData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280', fontWeight: 'bold' }} dy={8} />
-                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280', fontWeight: 'bold' }} tickFormatter={(val) => `${currentCurrency.symbol}${val >= 1000 ? (val/1000).toFixed(0)+'K' : val}`} />
-                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280', fontWeight: 'bold' }} tickFormatter={(val) => `${val}%`} />
-                <RechartsTooltip contentStyle={{ borderRadius: '12px', border: '1px solid rgba(134,59,255,0.3)', background: '#0d0d1a', color: '#e9d5ff', boxShadow: '0 10px 30px rgba(0,0,0,0.6)', fontSize: 11 }} />
-                <Line yAxisId="left" type="monotone" dataKey="profit" stroke="#863bff" strokeWidth={2} dot={false} activeDot={{ r: 5 }} />
-                <Line yAxisId="right" type="monotone" dataKey="margin" stroke="#10b981" strokeWidth={2} dot={false} activeDot={{ r: 5 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+      {/* Bottom: 2 columns — Income vs Expense Donut | Expense Category Donut */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Donut Chart 1: Income vs Expense */}
         <div className="rounded-xl border border-white/10 bg-[#111120] p-6 flex flex-col">
