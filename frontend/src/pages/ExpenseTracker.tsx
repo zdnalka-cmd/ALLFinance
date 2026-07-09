@@ -54,7 +54,14 @@ const ExpenseTracker = () => {
       data.append('amount', formData.amount);
       data.append('category_id', formData.category_id);
       data.append('note', formData.note);
-      data.append('transaction_date', formData.transaction_date);
+      
+      let finalDate = formData.transaction_date;
+      const now = new Date();
+      if (finalDate === now.toISOString().split('T')[0]) {
+        finalDate = now.toISOString();
+      }
+      data.append('transaction_date', finalDate);
+      
       if (receiptFile) data.append('receipt', receiptFile);
       
       await axiosInstance.post('/finance/expenses', data, {
@@ -210,7 +217,7 @@ const ExpenseTracker = () => {
                   value={formData.amount}
                   onChange={e => setFormData({...formData, amount: e.target.value})}
                   className="w-full rounded-lg border border-white/15 p-2.5 text-sm font-medium focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                  placeholder="cth. 150.00"
+                  placeholder={t('eg_amount')}
                 />
               </div>
 
@@ -222,7 +229,7 @@ const ExpenseTracker = () => {
                   onChange={e => setFormData({...formData, category_id: e.target.value})}
                   className="w-full rounded-lg border border-white/15 p-2.5 text-sm font-medium focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                 >
-                  <option value="">Pilih kategori...</option>
+                  <option value="">{t('select_category')}</option>
                   {['food', 'beauty', 'culture', 'health', 'gift', 'transportation', 'education', 'household', 'apparel'].map(key => (
                     <option key={key} value={key}>{t(key as any)}</option>
                   ))}
@@ -247,7 +254,7 @@ const ExpenseTracker = () => {
                   value={formData.note}
                   onChange={e => setFormData({...formData, note: e.target.value})}
                   className="w-full rounded-lg border border-white/15 p-2.5 text-sm font-medium focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                  placeholder="cth. Membeli perlengkapan kantor"
+                  placeholder={t('eg_desc_expense')}
                 />
               </div>
 
@@ -262,7 +269,7 @@ const ExpenseTracker = () => {
               </div>
 
               <div className="mt-4 flex gap-3 justify-end">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-lg px-4 py-2 text-sm font-bold text-gray-300 hover:bg-[#1a1a2e]">Batal</button>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-lg px-4 py-2 text-sm font-bold text-gray-300 hover:bg-[#1a1a2e]">{t('cancel')}</button>
                 <button type="submit" className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-purple-700">{t('add_expense')}</button>
               </div>
             </form>

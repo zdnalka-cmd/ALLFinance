@@ -4,12 +4,12 @@ import { AuthContext } from '../context/AuthContext';
 import { CurrencyContext, currencies } from '../context/CurrencyContext';
 import axiosInstance from '../api/axiosInstance';
 import toast from 'react-hot-toast';
-import { 
-  LayoutDashboard, 
-  TrendingUp, 
-  TrendingDown, 
+import {
+  LayoutDashboard,
+  TrendingUp,
+  TrendingDown,
 
-  Users, 
+  Users,
   BookOpen,
   Bell,
   LogOut,
@@ -67,7 +67,7 @@ const MainLayout = () => {
       toast.error('Harap isi subjek dan pesan laporan');
       return;
     }
-    
+
     setIsSubmittingReport(true);
     try {
       const res = await axiosInstance.post('/reports', {
@@ -138,7 +138,7 @@ const MainLayout = () => {
     navigate('/login');
     toast.success('Berhasil keluar');
   };
-  
+
   const handleComingSoon = (feature: string) => {
     toast(`Fitur "${feature}" akan segera hadir!`, { icon: '🚧' });
   };
@@ -148,7 +148,7 @@ const MainLayout = () => {
       const file = e.target.files[0];
       const formData = new FormData();
       formData.append('profile_picture', file);
-      
+
       const toastId = toast.loading('Mengunggah foto...');
       try {
         const response = await axiosInstance.post('/auth/profile/upload', formData, {
@@ -156,7 +156,7 @@ const MainLayout = () => {
             'Content-Type': 'multipart/form-data',
           },
         });
-        
+
         // Update user context
         if (user) {
           updateUser({ ...user, profile_picture: response.data.url });
@@ -182,7 +182,7 @@ const MainLayout = () => {
       {/* ── Top Header ── */}
       <header style={{ background: '#0f0f1a', borderBottom: '1px solid rgba(134,59,255,0.15)' }}
         className="flex items-center justify-between px-5 py-2.5">
-        
+
         {/* Brand */}
         <div className="flex items-center gap-2.5">
           <Logo />
@@ -237,10 +237,10 @@ const MainLayout = () => {
                     <div className="p-6 text-center text-xs" style={{ color: '#6b7280' }}>Belum ada notifikasi</div>
                   ) : (
                     notifications.map((notif) => (
-                      <div key={notif.id} 
-                        onClick={() => { if(!notif.is_read) markAsRead(notif.id) }}
+                      <div key={notif.id}
+                        onClick={() => { if (!notif.is_read) markAsRead(notif.id) }}
                         className={`px-4 py-3 text-xs cursor-pointer transition-colors border-b last:border-b-0`}
-                        style={{ 
+                        style={{
                           borderColor: 'rgba(255,255,255,0.05)',
                           background: notif.is_read ? 'transparent' : 'rgba(134,59,255,0.05)',
                         }}>
@@ -265,12 +265,12 @@ const MainLayout = () => {
             )}
           </div>
 
-          <button 
+          <button
             onClick={() => setIsReportModalOpen(true)}
             className="flex items-center gap-1.5 rounded-lg border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 text-xs font-bold text-purple-400 hover:bg-purple-500/20"
           >
             <MessageSquare size={14} />
-            <span className="hidden sm:inline">Laporan</span>
+            <span className="hidden sm:inline">{t('send_report')}</span>
           </button>
 
           {/* Currency Selector */}
@@ -285,7 +285,7 @@ const MainLayout = () => {
               <div className="absolute right-0 mt-3 w-40 rounded-xl shadow-2xl z-50 overflow-hidden"
                 style={{ background: '#12121c', border: '1px solid rgba(134,59,255,0.2)' }}>
                 {currencies.map((c) => (
-                  <div key={c.code} 
+                  <div key={c.code}
                     onClick={() => { setCurrentCurrency(c); setIsCurrencyOpen(false); }}
                     className={`px-4 py-2 text-xs cursor-pointer transition-colors flex items-center gap-2 hover:bg-white/10 ${currentCurrency.code === c.code ? 'bg-purple-900/30' : ''}`}
                   >
@@ -298,21 +298,21 @@ const MainLayout = () => {
           </div>
 
           {/* User avatar */}
-          <div className="flex items-center gap-2.5 cursor-pointer group" title="Ubah Profil Saya" onClick={() => fileInputRef.current?.click()}>
+          <div className="flex items-center gap-2.5 cursor-pointer group" title={t('edit_profile')} onClick={() => fileInputRef.current?.click()}>
             <input type="file" ref={fileInputRef} onChange={handleProfileUpload} className="hidden" accept="image/png, image/jpeg, image/jpg" />
             <div className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-white bg-cover bg-center overflow-hidden"
-              style={{ 
-                backgroundImage: user?.profile_picture ? `url(${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${user.profile_picture})` : 'linear-gradient(135deg, #6d28d9, #863bff)', 
+              style={{
+                backgroundImage: user?.profile_picture ? `url(${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${user.profile_picture})` : 'linear-gradient(135deg, #6d28d9, #863bff)',
                 backgroundPosition: 'center',
                 backgroundSize: 'cover',
                 backgroundRepeat: 'no-repeat',
-                boxShadow: '0 0 12px rgba(134,59,255,0.4)' 
+                boxShadow: '0 0 12px rgba(134,59,255,0.4)'
               }}>
               {!user?.profile_picture && (user?.name?.charAt(0)?.toUpperCase() || 'K')}
             </div>
             <div className="hidden sm:block">
               <p className="text-xs font-bold text-white leading-none">{user?.name || 'Kasir'}</p>
-              <p className="text-[10px] font-medium leading-none mt-0.5" style={{ color: '#a855f7' }}>di AllFinance</p>
+              <p className="text-[10px] font-medium leading-none mt-0.5" style={{ color: '#a855f7' }}>{t('at_allfinance')}</p>
             </div>
           </div>
 
@@ -384,7 +384,7 @@ const MainLayout = () => {
       {/* ── Main Content ── */}
       <main className="flex-1 overflow-auto flex justify-center" style={{ background: '#07070f', padding: '24px' }}>
         <div className={`mx-auto w-full transition-all duration-300 ease-in-out`}
-          style={{ 
+          style={{
             maxWidth: viewMode === 'Mobile' ? '375px' : viewMode === 'Tablet' ? '768px' : '1400px',
             border: viewMode !== 'Desktop' ? '1px solid rgba(134,59,255,0.3)' : 'none',
             borderRadius: viewMode !== 'Desktop' ? '16px' : '0',
@@ -401,7 +401,7 @@ const MainLayout = () => {
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <MessageSquare size={18} className="text-purple-400" />
-                Kirim Laporan
+                {t('send_report')}
               </h3>
               <button onClick={() => setIsReportModalOpen(false)} className="rounded-lg p-1 text-gray-400 hover:bg-white/10 hover:text-white">
                 <X size={18} />
@@ -409,38 +409,38 @@ const MainLayout = () => {
             </div>
             <form onSubmit={handleReportSubmit}>
               <div className="mb-4 text-xs p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400">
-                <p className="font-bold mb-1">Peringatan Sistem Anti-Spam:</p>
+                <p className="font-bold mb-1">{t('anti_spam_warning')}</p>
                 <ul className="list-disc pl-4 space-y-0.5">
-                  <li>Anda memiliki batas maksimal 3 kuota laporan.</li>
-                  <li>Jika kuota habis, Anda harus menunggu 2 hari.</li>
-                  <li>Jika melanggar lebih dari 3 kali, akun akan dihapus otomatis!</li>
+                  <li>{t('anti_spam_rule_1')}</li>
+                  <li>{t('anti_spam_rule_2')}</li>
+                  <li>{t('anti_spam_rule_3')}</li>
                 </ul>
               </div>
               <div className="mb-4">
-                <label className="mb-1 block text-sm font-medium text-gray-400">Subjek</label>
-                <input 
-                  type="text" 
+                <label className="mb-1 block text-sm font-medium text-gray-400">{t('report_subject')}</label>
+                <input
+                  type="text"
                   value={reportSubject}
                   onChange={e => setReportSubject(e.target.value)}
                   className="w-full rounded-xl border border-purple-500/20 bg-black/50 p-2.5 text-sm text-white focus:border-purple-500 focus:outline-none"
-                  placeholder="Misal: Bug, Fitur Baru, atau Bantuan"
+                  placeholder={t('report_subject_placeholder')}
                   required
                 />
               </div>
               <div className="mb-5">
-                <label className="mb-1 block text-sm font-medium text-gray-400">Pesan Laporan</label>
-                <textarea 
+                <label className="mb-1 block text-sm font-medium text-gray-400">{t('report_message')}</label>
+                <textarea
                   value={reportMessage}
                   onChange={e => setReportMessage(e.target.value)}
                   className="w-full rounded-xl border border-purple-500/20 bg-black/50 p-2.5 text-sm text-white focus:border-purple-500 focus:outline-none min-h-[100px]"
-                  placeholder="Jelaskan masalah atau laporan Anda secara detail..."
+                  placeholder={t('report_message_placeholder')}
                   required
                 ></textarea>
               </div>
               <div className="flex justify-end gap-2">
-                <button type="button" onClick={() => setIsReportModalOpen(false)} className="rounded-xl px-4 py-2 text-sm font-bold text-gray-400 hover:bg-white/10 transition-colors">Batal</button>
+                <button type="button" onClick={() => setIsReportModalOpen(false)} className="rounded-xl px-4 py-2 text-sm font-bold text-gray-400 hover:bg-white/10 transition-colors">{t('cancel')}</button>
                 <button type="submit" disabled={isSubmittingReport} className="rounded-xl bg-purple-600 px-4 py-2 text-sm font-bold text-white hover:bg-purple-500 disabled:opacity-50 transition-colors">
-                  {isSubmittingReport ? 'Mengirim...' : 'Kirim Laporan'}
+                  {isSubmittingReport ? t('sending') : t('send_report')}
                 </button>
               </div>
             </form>

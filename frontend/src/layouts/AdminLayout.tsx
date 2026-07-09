@@ -3,8 +3,8 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { CurrencyContext } from '../context/CurrencyContext';
 import toast from 'react-hot-toast';
-import { 
-  LayoutDashboard, 
+import {
+  LayoutDashboard,
   LogOut,
   ShieldCheck,
   Bell
@@ -44,7 +44,7 @@ const AdminLayout = () => {
       }
     };
     fetchNotifications();
-    
+
     const interval = setInterval(fetchNotifications, 60000);
     return () => clearInterval(interval);
   }, []);
@@ -77,7 +77,7 @@ const AdminLayout = () => {
       {/* ── Top Header ── */}
       <header style={{ background: '#0f172a', borderBottom: '1px solid rgba(59,130,246,0.15)' }}
         className="flex items-center justify-between px-5 py-2.5">
-        
+
         {/* Brand */}
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl"
@@ -96,9 +96,9 @@ const AdminLayout = () => {
 
         {/* Right Actions */}
         <div className="flex items-center gap-4">
-          
+
           <div className="h-4 w-px bg-white/10"></div>
-          
+
           {/* Notification Bell */}
           <div className="relative">
             <button onClick={() => setIsNotifOpen(!isNotifOpen)} className="relative flex h-8 w-8 items-center justify-center rounded-full text-blue-400 hover:bg-blue-500/10 transition-colors">
@@ -139,7 +139,7 @@ const AdminLayout = () => {
               </div>
             )}
           </div>
-          
+
           {/* Admin Profile */}
           <div className="flex items-center gap-3 pl-1">
             <div className="relative group">
@@ -147,7 +147,7 @@ const AdminLayout = () => {
                 <ShieldCheck size={16} />
               </div>
             </div>
-            
+
             <div className="hidden sm:block">
               <p className="text-sm font-bold text-white leading-tight">{user?.name || 'Administrator'}</p>
               <p className="text-[10px] font-medium text-blue-400">{user?.role}</p>
@@ -198,7 +198,7 @@ const AdminLayout = () => {
       <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 relative">
         {/* Background ambient light */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
-        
+
         <div className="relative z-10">
           <Outlet />
         </div>

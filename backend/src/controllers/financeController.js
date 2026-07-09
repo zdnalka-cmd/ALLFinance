@@ -233,6 +233,44 @@ exports.getDashboardStats = async (req, res) => {
     const totalExpenses = expenses.reduce((sum, item) => sum + Number(item.amount), 0);
     const netProfit = totalRevenue - totalExpenses;
     
+    // 2.5 Financial Targets Logic
+    const targets = await prisma.financialTarget.findMany({ where: { user_id: req.user.id } });
+    
+    const activeTargets = [];
+    
+    for (const target of targets) {
+      if (new Date() > target.end_date) {
+        // Target expired, delete it
+        await prisma.financialTarget.delete({ where: { id: target.id } });
+      } else {
+        let currentAmount = 0;
+        
+        if (target.type === 'expense') {
+          const targetExpenses = expenses.filter(e => {
+            const expDate = new Date(e.transaction_date);
+            return expDate >= new Date(target.start_date) && expDate <= new Date(target.end_date);
+          });
+          currentAmount = targetExpenses.reduce((sum, item) => sum + Number(item.amount), 0);
+        } else if (target.type === 'income') {
+          const targetIncomes = incomes.filter(i => {
+            const incDate = new Date(i.transaction_date);
+            return incDate >= new Date(target.start_date) && incDate <= new Date(target.end_date);
+          });
+          currentAmount = targetIncomes.reduce((sum, item) => sum + Number(item.amount), 0);
+        }
+        
+        activeTargets.push({
+          id: target.id,
+          name: target.name,
+          type: target.type,
+          amount: Number(target.amount),
+          startDate: target.start_date,
+          endDate: target.end_date,
+          currentAmount
+        });
+      }
+    }
+    
     // Some mock data for stats we don't track yet
     const invoices = await prisma.invoice.findMany({ where: { user_id: req.user.id }, include: { items: true } });
     const purchases = await prisma.purchase.findMany({ where: { user_id: req.user.id }, include: { items: true } });
@@ -296,7 +334,8 @@ exports.getDashboardStats = async (req, res) => {
         totalProductsPurchased
       },
       chartData: Object.values(monthlyData),
-      expenseByCategory
+      expenseByCategory,
+      activeTargets
     });
 
   } catch (error) {
@@ -424,6 +463,59 @@ exports.getSuppliers = async (req, res) => {
       orderBy: { name: 'asc' }
     });
     res.json(suppliers);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// --- Financial Targets ---
+exports.createTarget = async (req, res) => {
+  try {
+    const { name, type, amount, period } = req.body;
+    let startDate = new Date();
+    
+    let endDate = new Date(startDate);
+    
+    if (period === '1 Hari') {
+      endDate.setDate(endDate.getDate() + 1);
+      endDate.setHours(23, 59, 59, 999);
+    } else if (period === '3 Hari') {
+      endDate.setDate(endDate.getDate() + 2);
+      endDate.setHours(23, 59, 59, 999);
+    } else if (period === '1 Minggu') {
+      endDate.setDate(endDate.getDate() + 6);
+      endDate.setHours(23, 59, 59, 999);
+    } else if (period === '1 Bulan') {
+      endDate.setMonth(endDate.getMonth() + 1);
+      endDate.setHours(23, 59, 59, 999);
+    } else {
+      return res.status(400).json({ error: 'Periode tidak valid' });
+    }
+
+    const target = await prisma.financialTarget.create({
+      data: {
+        user_id: req.user.id,
+        name,
+        type,
+        amount: parseFloat(amount),
+        start_date: startDate,
+        end_date: endDate
+      }
+    });
+
+    res.json({ message: 'Target berhasil disimpan', target });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.deleteTarget = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.financialTarget.delete({
+      where: { id }
+    });
+    res.json({ message: 'Target berhasil dihapus' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -9,223 +9,221 @@ datasource db {
 }
 
 model User {
-  id         String   @id @default(uuid())
-  name       String
-  email      String   @unique
-  password   String
-  role           String   @default("Staff Kasir") // Owner, Admin, Staff Kasir
-  dashboard_name String?
-  profile_picture String?
-  created_at     DateTime @default(now())
-  last_active    DateTime? @default(now())
-  is_suspended   Boolean  @default(false)
-  report_tokens  Int      @default(3)
-  report_exhaustions Int  @default(0)
+  id                 String            @id @default(uuid())
+  name               String
+  email              String            @unique
+  password           String
+  role               String            @default("Staff Kasir")
+  created_at         DateTime          @default(now())
+  dashboard_name     String?
+  profile_picture    String?
+  is_suspended       Boolean           @default(false)
+  last_active        DateTime?         @default(now())
+  report_exhaustions Int               @default(0)
+  report_tokens      Int               @default(3)
   token_refresh_time DateTime?
+  categories         Category[]
+  customers          Customer[]
+  expenses           Expense[]
+  targets            FinancialTarget[]
+  incomes            Income[]
+  invoices           Invoice[]
+  notifications      Notification[]
+  payables           Payable[]
+  products           Product[]
+  purchases          Purchase[]
+  receivables        Receivable[]
+  reports            Report[]
+  suppliers          Supplier[]
+}
 
-  customers   Customer[]
-  suppliers   Supplier[]
-  categories  Category[]
-  incomes     Income[]
-  expenses    Expense[]
-  invoices    Invoice[]
-  receivables Receivable[]
-  payables    Payable[]
-  products    Product[]
-  purchases   Purchase[]
-  notifications Notification[]
-  reports       Report[]
+model FinancialTarget {
+  id         String   @id @default(uuid())
+  user_id    String
+  name       String
+  type       String
+  amount     Decimal
+  start_date DateTime
+  end_date   DateTime
+  created_at DateTime @default(now())
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model Customer {
-  id         String     @id @default(uuid())
-  user_id    String?
+  id         String    @id @default(uuid())
   name       String
   phone      String?
   email      String?
   address    String?
   notes      String?
-  created_at DateTime   @default(now())
+  created_at DateTime  @default(now())
+  user_id    String?
+  user       User?     @relation(fields: [user_id], references: [id])
   incomes    Income[]
   invoices   Invoice[]
-
-  user       User?      @relation(fields: [user_id], references: [id])
 }
 
 model Supplier {
   id         String     @id @default(uuid())
-  user_id    String?
   name       String
   phone      String?
   email      String?
   address    String?
   notes      String?
   created_at DateTime   @default(now())
+  user_id    String?
   expenses   Expense[]
   payables   Payable[]
   purchases  Purchase[]
-
   user       User?      @relation(fields: [user_id], references: [id])
 }
 
 model Category {
-  id         String    @id @default(uuid())
-  user_id    String?
-  name              String
-  type              String    // income or expense
-  incomes           Income[]
-  expenses          Expense[]
-
-  user       User?      @relation(fields: [user_id], references: [id])
+  id       String    @id @default(uuid())
+  name     String
+  type     String
+  user_id  String?
+  user     User?     @relation(fields: [user_id], references: [id])
+  expenses Expense[]
+  incomes  Income[]
 }
 
 model Income {
-  id               String   @id @default(uuid())
-  user_id          String?
+  id               String    @id @default(uuid())
   customer_id      String?
   category_id      String
   amount           Decimal
   payment_method   String
   note             String?
   transaction_date DateTime
-
-  customer Customer? @relation(fields: [customer_id], references: [id])
-  category Category  @relation(fields: [category_id], references: [id])
-  user     User?     @relation(fields: [user_id], references: [id])
+  user_id          String?
+  category         Category  @relation(fields: [category_id], references: [id])
+  customer         Customer? @relation(fields: [customer_id], references: [id])
+  user             User?     @relation(fields: [user_id], references: [id])
 }
 
 model Expense {
-  id               String   @id @default(uuid())
-  user_id          String?
+  id               String    @id @default(uuid())
   supplier_id      String?
   category_id      String
   amount           Decimal
   note             String?
   receipt          String?
   transaction_date DateTime
-
-  supplier Supplier? @relation(fields: [supplier_id], references: [id])
-  category Category  @relation(fields: [category_id], references: [id])
-  user     User?     @relation(fields: [user_id], references: [id])
+  user_id          String?
+  category         Category  @relation(fields: [category_id], references: [id])
+  supplier         Supplier? @relation(fields: [supplier_id], references: [id])
+  user             User?     @relation(fields: [user_id], references: [id])
 }
 
 model Invoice {
   id             String        @id @default(uuid())
-  user_id        String?
   invoice_number String        @unique
   customer_id    String?
   total          Decimal
   discount       Decimal       @default(0)
   tax            Decimal       @default(0)
-  status         String        // Draft, Unpaid, Paid, Cancel
+  status         String
   due_date       DateTime?
   created_at     DateTime      @default(now())
-
-  customer    Customer?     @relation(fields: [customer_id], references: [id])
-  items       InvoiceItem[]
-  receivables Receivable[]
-  user        User?         @relation(fields: [user_id], references: [id])
+  user_id        String?
+  customer       Customer?     @relation(fields: [customer_id], references: [id])
+  user           User?         @relation(fields: [user_id], references: [id])
+  items          InvoiceItem[]
+  receivables    Receivable[]
 }
 
 model InvoiceItem {
-  id           String  @id @default(uuid())
-  invoice_id   String
-  product_id   String
-  qty          Int
-  price        Decimal
-  subtotal     Decimal
-
-  invoice Invoice @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  id         String  @id @default(uuid())
+  invoice_id String
+  qty        Int
+  price      Decimal
+  subtotal   Decimal
+  product_id String
+  invoice    Invoice @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
 }
 
 model Receivable {
   id         String    @id @default(uuid())
-  user_id    String?
   invoice_id String
   remaining  Decimal
   due_date   DateTime?
-
-  invoice Invoice @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
-  user    User?   @relation(fields: [user_id], references: [id])
+  user_id    String?
+  invoice    Invoice   @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  user       User?     @relation(fields: [user_id], references: [id])
 }
 
 model Payable {
   id          String    @id @default(uuid())
-  user_id     String?
   supplier_id String
   amount      Decimal
   due_date    DateTime?
-
-  supplier Supplier @relation(fields: [supplier_id], references: [id])
-  user     User?    @relation(fields: [user_id], references: [id])
+  user_id     String?
+  supplier    Supplier  @relation(fields: [supplier_id], references: [id])
+  user        User?     @relation(fields: [user_id], references: [id])
 }
 
 model Product {
-  id             String    @id @default(uuid())
-  user_id        String?
+  id             String         @id @default(uuid())
   name           String
-  description    String?
-  image_url      String?
   category       String
   cost_price     Decimal
   retail_price   Decimal
-  stock          Int       @default(0)
-  is_digital     Boolean   @default(true)
-  is_global      Boolean   @default(true)
-  created_at     DateTime  @default(now())
-
+  stock          Int            @default(0)
+  created_at     DateTime       @default(now())
+  user_id        String?
+  description    String?
+  image_url      String?
+  is_digital     Boolean        @default(true)
+  is_global      Boolean        @default(true)
   invoice_items  InvoiceItem[]
-  purchase_items PurchaseItem[]
   user           User?          @relation(fields: [user_id], references: [id])
+  purchase_items PurchaseItem[]
 }
 
 model Purchase {
-  id            String         @id @default(uuid())
-  user_id       String?
-  po_number     String         @unique
-  date          DateTime
-  supplier_id   String?
-  total_amount  Decimal
-  status        String         // Pending, Completed, Cancelled
-  created_at    DateTime       @default(now())
-
-  supplier      Supplier?      @relation(fields: [supplier_id], references: [id])
-  items         PurchaseItem[]
-  user          User?          @relation(fields: [user_id], references: [id])
+  id           String         @id @default(uuid())
+  po_number    String         @unique
+  date         DateTime
+  supplier_id  String?
+  total_amount Decimal
+  status       String
+  created_at   DateTime       @default(now())
+  user_id      String?
+  supplier     Supplier?      @relation(fields: [supplier_id], references: [id])
+  user         User?          @relation(fields: [user_id], references: [id])
+  items        PurchaseItem[]
 }
 
 model PurchaseItem {
-  id            String   @id @default(uuid())
-  purchase_id   String
-  product_id    String
-  qty           Int
-  cost_price    Decimal
-  subtotal      Decimal
-
-  purchase      Purchase @relation(fields: [purchase_id], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  id          String   @id @default(uuid())
+  purchase_id String
+  product_id  String
+  qty         Int
+  cost_price  Decimal
+  subtotal    Decimal
+  product     Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  purchase    Purchase @relation(fields: [purchase_id], references: [id], onDelete: Cascade)
 }
 
 model Notification {
   id         String   @id @default(uuid())
   user_id    String
   message    String
-  type       String   // income, expense, sale, purchase, etc.
+  type       String
   is_read    Boolean  @default(false)
   created_at DateTime @default(now())
-
   user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model Report {
-  id         String   @id @default(uuid())
-  user_id    String
-  subject    String
-  message    String
-  status     String   @default("Pending") // Pending, Reviewed, Dijawab
+  id          String   @id @default(uuid())
+  user_id     String
+  subject     String
+  message     String
+  status      String   @default("Pending")
+  created_at  DateTime @default(now())
   admin_reply String?
-  created_at DateTime @default(now())
-
-  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }

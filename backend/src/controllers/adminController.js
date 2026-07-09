@@ -3,7 +3,7 @@ const prisma = require('../prismaClient');
 exports.getAdminStats = async (req, res) => {
   try {
     const totalUsers = await prisma.user.count();
-    
+
     res.json({
       totalUsers,
     });
@@ -23,6 +23,7 @@ exports.getUsers = async (req, res) => {
         email: true,
         last_active: true,
         is_suspended: true,
+        profile_picture: true,
         incomes: { select: { amount: true } },
         expenses: { select: { amount: true } }
       }
@@ -35,6 +36,7 @@ exports.getUsers = async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        profile_picture: user.profile_picture,
         last_active: user.last_active,
         is_suspended: user.is_suspended,
         totalIncome,
@@ -45,6 +47,32 @@ exports.getUsers = async (req, res) => {
     res.json(formattedUsers);
   } catch (error) {
     console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+exports.getUserReceipts = async (req, res) => {
+  try {
+    const expenses = await prisma.expense.findMany({
+      where: {
+        user_id: req.params.id,
+        receipt: { not: null }
+      },
+      select: {
+        id: true,
+        amount: true,
+        note: true,
+        receipt: true,
+        transaction_date: true,
+        category: {
+          select: { name: true }
+        }
+      },
+      orderBy: { transaction_date: 'desc' }
+    });
+    res.json(expenses);
+  } catch (error) {
+    console.error('Error fetching user receipts:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
@@ -66,7 +94,7 @@ exports.suspendUser = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.params.id } });
     if (!user) return res.status(404).json({ message: 'User not found' });
-    
+
     const updated = await prisma.user.update({
       where: { id: req.params.id },
       data: { is_suspended: !user.is_suspended }
@@ -88,11 +116,11 @@ exports.deleteUser = async (req, res) => {
 
 exports.getTrends = async (req, res) => {
   try {
-    const incomes = await prisma.income.findMany({ select: { amount: true, transaction_date: true }});
-    const expenses = await prisma.expense.findMany({ select: { amount: true, transaction_date: true }});
-    
+    const incomes = await prisma.income.findMany({ select: { amount: true, transaction_date: true } });
+    const expenses = await prisma.expense.findMany({ select: { amount: true, transaction_date: true } });
+
     const monthlyData = {};
-    
+
     for (let i = 5; i >= 0; i--) {
       const d = new Date();
       d.setMonth(d.getMonth() - i);
@@ -102,13 +130,13 @@ exports.getTrends = async (req, res) => {
       const sortKey = `${year}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       monthlyData[key] = { name: key, Pemasukan: 0, Pengeluaran: 0, _sort: sortKey };
     }
-    
+
     const processItem = (item, type) => {
       const date = new Date(item.transaction_date);
       const month = date.toLocaleString('id-ID', { month: 'short' });
       const year = date.getFullYear();
       const key = `${month} ${year}`;
-      
+
       if (monthlyData[key]) {
         monthlyData[key][type] += Number(item.amount);
       }
@@ -116,7 +144,7 @@ exports.getTrends = async (req, res) => {
 
     incomes.forEach(i => processItem(i, 'Pemasukan'));
     expenses.forEach(e => processItem(e, 'Pengeluaran'));
-    
+
     const result = Object.values(monthlyData).sort((a, b) => a._sort.localeCompare(b._sort));
     res.json(result);
   } catch (error) {
@@ -129,7 +157,7 @@ exports.getPopularCategories = async (req, res) => {
     const categories = await prisma.category.findMany({
       select: { name: true, _count: { select: { incomes: true, expenses: true } } }
     });
-    
+
     const grouped = {};
     categories.forEach(c => {
       if (!grouped[c.name]) grouped[c.name] = 0;

@@ -38,4 +38,7 @@ router.route('/customers/:id')
 
 router.get('/suppliers', financeController.getSuppliers);
 
+router.post('/targets', financeController.createTarget);
+router.delete('/targets/:id', financeController.deleteTarget);
+
 module.exports = router;

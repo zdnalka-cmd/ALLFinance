@@ -47,7 +47,15 @@ const IncomeTracker = () => {
   const handleAddIncome = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axiosInstance.post('/finance/incomes', formData);
+      let finalDate = formData.transaction_date;
+      const now = new Date();
+      if (finalDate === now.toISOString().split('T')[0]) {
+        finalDate = now.toISOString();
+      }
+      
+      const dataToSubmit = { ...formData, transaction_date: finalDate };
+
+      await axiosInstance.post('/finance/incomes', dataToSubmit);
       toast.success('Pemasukan berhasil ditambahkan!');
       setIsModalOpen(false);
       setFormData({
@@ -189,7 +197,7 @@ const IncomeTracker = () => {
                   value={formData.amount}
                   onChange={e => setFormData({...formData, amount: e.target.value})}
                   className="w-full rounded-lg border border-white/15 p-2.5 text-sm font-medium focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                  placeholder="cth. 500.00"
+                  placeholder={t('eg_amount')}
                 />
               </div>
 
@@ -201,7 +209,7 @@ const IncomeTracker = () => {
                   onChange={e => setFormData({...formData, category_id: e.target.value})}
                   className="w-full rounded-lg border border-white/15 p-2.5 text-sm font-medium focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                 >
-                  <option value="">Pilih Kategori</option>
+                  <option value="">{t('select_category')}</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{t(c.name.toLowerCase() as any) || c.name}</option>)}
                 </select>
               </div>
@@ -224,12 +232,12 @@ const IncomeTracker = () => {
                   value={formData.note}
                   onChange={e => setFormData({...formData, note: e.target.value})}
                   className="w-full rounded-lg border border-white/15 p-2.5 text-sm font-medium focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                  placeholder="cth. Menjual 5 unit Produk X"
+                  placeholder={t('eg_desc_income')}
                 />
               </div>
 
               <div className="mt-4 flex gap-3 justify-end">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-lg px-4 py-2 text-sm font-bold text-gray-300 hover:bg-[#1a1a2e]">Batal</button>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-lg px-4 py-2 text-sm font-bold text-gray-300 hover:bg-[#1a1a2e]">{t('cancel')}</button>
                 <button type="submit" className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-purple-700">{t('add_income')}</button>
               </div>
             </form>

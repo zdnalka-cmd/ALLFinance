@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { CurrencyContext } from '../../context/CurrencyContext';
-import { Users, Activity, ShieldAlert, MessageSquare, TrendingUp, TrendingDown, Trash2, Lock, Unlock, BarChart3, LineChart as LineChartIcon, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, Activity, ShieldAlert, MessageSquare, TrendingUp, TrendingDown, Trash2, Lock, Unlock, BarChart3, LineChart as LineChartIcon, Search, ChevronLeft, ChevronRight, Image, X } from 'lucide-react';
 import axiosInstance from '../../api/axiosInstance';
 import toast from 'react-hot-toast';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
@@ -38,6 +38,13 @@ const AdminDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
+  // Receipt Modal State
+  const [selectedUserReceipts, setSelectedUserReceipts] = useState<{ id: string, name: string } | null>(null);
+  const [userReceipts, setUserReceipts] = useState<any[]>([]);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [loadingReceipts, setLoadingReceipts] = useState(false);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+
   const fetchAdminData = async () => {
     try {
       const [statsRes, usersRes, reportsRes, trendsRes, catRes] = await Promise.all([
@@ -47,7 +54,7 @@ const AdminDashboard = () => {
         axiosInstance.get('/admin/trends'),
         axiosInstance.get('/admin/categories/popular')
       ]);
-      
+
       setStats(statsRes.data);
       setUsersList(usersRes.data);
       setReports(reportsRes.data);
@@ -65,7 +72,7 @@ const AdminDashboard = () => {
     fetchAdminData();
     const interval = setInterval(() => {
       // Background silent refresh for online status
-      axiosInstance.get('/admin/users').then(res => setUsersList(res.data)).catch(() => {});
+      axiosInstance.get('/admin/users').then(res => setUsersList(res.data)).catch(() => { });
     }, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -97,6 +104,21 @@ const AdminDashboard = () => {
     return diff < 5 * 60 * 1000; // 5 minutes
   };
 
+  const handleViewReceipts = async (userId: string, userName: string) => {
+    setSelectedUserReceipts({ id: userId, name: userName });
+    setIsReceiptModalOpen(true);
+    setLoadingReceipts(true);
+    setUserReceipts([]);
+    try {
+      const res = await axiosInstance.get(`/admin/users/${userId}/receipts`);
+      setUserReceipts(res.data);
+    } catch (error) {
+      toast.error('Gagal memuat kwitansi pengguna');
+    } finally {
+      setLoadingReceipts(false);
+    }
+  };
+
   const handleReplySubmit = async (reportId: string) => {
     if (!replyText.trim()) return toast.error('Teks balasan kosong');
     try {
@@ -121,11 +143,11 @@ const AdminDashboard = () => {
     }
   };
 
-  const filteredUsers = usersList.filter(u => 
-    u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredUsers = usersList.filter(u =>
+    u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  
+
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage) || 1;
   const paginatedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
@@ -191,8 +213,8 @@ const AdminDashboard = () => {
                   <LineChart data={trends}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                     <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
-                    <YAxis stroke="#64748b" fontSize={12} width={80} tickFormatter={(value) => `Rp${(value/1000000).toFixed(0)}M`} />
-                    <RechartsTooltip 
+                    <YAxis stroke="#64748b" fontSize={12} width={80} tickFormatter={(value) => `Rp${(value / 1000000).toFixed(0)}M`} />
+                    <RechartsTooltip
                       contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#fff' }}
                       formatter={(value: any) => formatCurrency(value)}
                     />
@@ -215,7 +237,7 @@ const AdminDashboard = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
                     <XAxis type="number" stroke="#64748b" fontSize={12} />
                     <YAxis dataKey="name" type="category" stroke="#64748b" fontSize={12} width={100} />
-                    <RechartsTooltip 
+                    <RechartsTooltip
                       contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#fff' }}
                       itemStyle={{ color: '#e2e8f0' }}
                       formatter={(value: any) => [`${value} kali digunakan`, 'Total Penggunaan']}
@@ -234,7 +256,7 @@ const AdminDashboard = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-6">
-            
+
             {/* Users List */}
             <div className="rounded-xl border border-blue-500/20 bg-[#0f172a] overflow-hidden">
               <div className="p-4 border-b border-blue-500/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-blue-500/5">
@@ -277,8 +299,21 @@ const AdminDashboard = () => {
                       paginatedUsers.map((u) => (
                         <tr key={u.id} className="border-b border-blue-500/5 hover:bg-blue-500/5 transition-colors">
                           <td className="px-4 py-3">
-                            <p className="font-bold text-gray-200">{u.name}</p>
-                            <p className="text-xs text-gray-500">{u.email}</p>
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-black text-white bg-cover bg-center overflow-hidden"
+                                style={{
+                                  backgroundImage: u.profile_picture ? `url(${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${u.profile_picture})` : 'linear-gradient(135deg, #6d28d9, #863bff)',
+                                  backgroundPosition: 'center',
+                                  backgroundSize: 'cover',
+                                  backgroundRepeat: 'no-repeat',
+                                }}>
+                                {!u.profile_picture && (u.name?.charAt(0)?.toUpperCase() || 'U')}
+                              </div>
+                              <div>
+                                <p className="font-bold text-gray-200">{u.name}</p>
+                                <p className="text-xs text-gray-500">{u.email}</p>
+                              </div>
+                            </div>
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex flex-col gap-1">
@@ -311,14 +346,21 @@ const AdminDashboard = () => {
                           </td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex justify-end gap-2">
-                              <button 
+                              <button
+                                onClick={() => handleViewReceipts(u.id, u.name)}
+                                className="rounded p-1.5 transition-colors bg-blue-500/10 text-blue-400 hover:bg-blue-500/20"
+                                title="Lihat Kwitansi"
+                              >
+                                <Image size={16} />
+                              </button>
+                              <button
                                 onClick={() => handleSuspend(u.id, u.is_suspended)}
                                 className={`rounded p-1.5 transition-colors ${u.is_suspended ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20' : 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20'}`}
                                 title={u.is_suspended ? "Buka Tangguh" : "Tangguhkan Akun"}
                               >
                                 {u.is_suspended ? <Unlock size={16} /> : <Lock size={16} />}
                               </button>
-                              <button 
+                              <button
                                 onClick={() => handleDelete(u.id)}
                                 className="rounded p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 transition-colors"
                                 title="Hapus Permanen"
@@ -333,7 +375,7 @@ const AdminDashboard = () => {
                   </tbody>
                 </table>
               </div>
-              
+
               {/* Pagination Controls */}
               {totalPages > 1 && (
                 <div className="p-4 border-t border-blue-500/10 flex items-center justify-between text-sm">
@@ -341,7 +383,7 @@ const AdminDashboard = () => {
                     Menampilkan <span className="font-bold text-gray-300">{((currentPage - 1) * itemsPerPage) + 1}</span> hingga <span className="font-bold text-gray-300">{Math.min(currentPage * itemsPerPage, filteredUsers.length)}</span> dari <span className="font-bold text-gray-300">{filteredUsers.length}</span> pengguna
                   </div>
                   <div className="flex gap-1">
-                    <button 
+                    <button
                       onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
                       className="p-1 rounded bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 disabled:opacity-30 disabled:hover:bg-blue-500/10 transition-colors"
@@ -357,7 +399,7 @@ const AdminDashboard = () => {
                         {i + 1}
                       </button>
                     ))}
-                    <button 
+                    <button
                       onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
                       className="p-1 rounded bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 disabled:opacity-30 disabled:hover:bg-blue-500/10 transition-colors"
@@ -388,9 +430,8 @@ const AdminDashboard = () => {
                           <h4 className="text-sm font-bold text-gray-200">{report.subject}</h4>
                           <p className="text-xs text-gray-500">Dari: {report.user.name} ({report.user.email})</p>
                         </div>
-                        <span className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
-                          report.status === 'Dijawab' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400'
-                        }`}>
+                        <span className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${report.status === 'Dijawab' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400'
+                          }`}>
                           {report.status}
                         </span>
                       </div>
@@ -403,7 +444,7 @@ const AdminDashboard = () => {
                         <div className="mt-3 rounded bg-purple-500/10 p-3 border border-purple-500/20 relative">
                           <p className="text-xs font-bold text-purple-400 mb-1">Balasan Anda:</p>
                           <p className="text-sm text-gray-300">{report.admin_reply}</p>
-                          <button 
+                          <button
                             onClick={() => handleDeleteReport(report.id)}
                             className="absolute top-2 right-2 text-rose-400 hover:text-rose-300 p-1"
                             title="Hapus Laporan Selesai"
@@ -430,7 +471,7 @@ const AdminDashboard = () => {
                               </div>
                             </div>
                           ) : (
-                            <button 
+                            <button
                               onClick={() => setReplyingTo(report.id)}
                               className="text-xs font-bold text-purple-400 hover:text-purple-300"
                             >
@@ -449,6 +490,91 @@ const AdminDashboard = () => {
         </>
       )}
 
+      {/* Receipt Modal */}
+      {isReceiptModalOpen && selectedUserReceipts && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-4xl max-h-[85vh] rounded-2xl border border-blue-500/20 bg-[#0f172a] shadow-2xl flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-blue-500/10 flex items-center justify-between bg-blue-500/5">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Image size={18} className="text-blue-400" />
+                Kwitansi: {selectedUserReceipts.name}
+              </h2>
+              <button
+                onClick={() => {
+                  setIsReceiptModalOpen(false);
+                  setSelectedUserReceipts(null);
+                }}
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+              {loadingReceipts ? (
+                <div className="flex h-40 items-center justify-center text-gray-400 font-medium">
+                  Memuat kwitansi...
+                </div>
+              ) : userReceipts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-40 text-gray-500 italic">
+                  <Image size={32} className="opacity-20 mb-2" />
+                  <p>Tidak ada kwitansi yang diunggah oleh pengguna ini.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {userReceipts.map(receipt => (
+                    <div key={receipt.id} className="rounded-xl border border-white/5 bg-black/30 overflow-hidden flex flex-col group">
+                      <div
+                        className="h-48 w-full bg-cover bg-center cursor-pointer relative overflow-hidden"
+                        style={{ backgroundImage: `url(${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${receipt.receipt})` }}
+                        onClick={() => setZoomedImage(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${receipt.receipt}`)}
+                      >
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <span className="text-white font-bold bg-black/60 px-3 py-1.5 rounded-lg backdrop-blur-sm text-sm">
+                            Perbesar Foto
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-4 flex flex-col gap-1.5">
+                        <div className="flex justify-between items-start">
+                          <span className="text-rose-400 font-black text-lg">{formatCurrency(receipt.amount)}</span>
+                          <span className="bg-white/10 text-gray-300 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">
+                            {receipt.category?.name || 'Kategori'}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-300 line-clamp-2 mt-1">{receipt.note || 'Tanpa catatan'}</p>
+                        <p className="text-[10px] text-gray-500 mt-2 font-medium">
+                          {new Date(receipt.transaction_date).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Zoom Modal */}
+      {zoomedImage && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 cursor-pointer"
+          onClick={() => setZoomedImage(null)}
+        >
+          <img
+            src={zoomedImage}
+            alt="Zoomed Receipt"
+            className="max-w-full max-h-[90vh] rounded-lg shadow-2xl border border-white/10"
+          />
+          <button
+            className="absolute top-4 right-4 text-white hover:text-gray-300 bg-black/50 p-2 rounded-full"
+            onClick={() => setZoomedImage(null)}
+          >
+            <X size={24} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
