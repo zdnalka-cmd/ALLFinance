@@ -51,7 +51,7 @@ const Login = () => {
   };
 
   return (
-    <div className="relative flex flex-col lg:flex-row h-screen w-full overflow-y-auto lg:overflow-hidden bg-black font-sans">
+    <div className="relative flex flex-col lg:flex-row min-h-screen w-full overflow-y-auto lg:overflow-hidden bg-black font-sans">
 
       {/* Ambient glow background */}
       <div className="absolute inset-0 pointer-events-none">
@@ -66,7 +66,7 @@ const Login = () => {
       </div>
 
       {/* === LEFT SECTION — Branding === */}
-      <div className="relative z-10 flex w-full lg:w-[35%] flex-col justify-between p-8 lg:p-12 border-b lg:border-b-0 lg:border-r border-white/5 shrink-0">
+      <div className="relative z-10 flex w-full lg:w-[35%] flex-col gap-8 lg:justify-between p-8 lg:p-12 border-b lg:border-b-0 lg:border-r border-white/5 shrink-0">
         {/* Logo mark top-left */}
         <div className="flex items-center gap-3">
           <Logo />
@@ -77,7 +77,7 @@ const Login = () => {
 
         {/* Main tagline */}
         <div>
-          <h1 className="text-5xl font-black text-white leading-tight tracking-tight mb-6">
+          <h1 className="text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight mb-4 lg:mb-6">
             Kelola<br />Keuangan<br />Anda
           </h1>
           <div className="flex flex-col gap-2 text-xs font-bold tracking-[0.2em] uppercase text-gray-400">
@@ -87,7 +87,7 @@ const Login = () => {
         </div>
 
         {/* Bottom subtle version text */}
-        <p className="text-xs text-gray-200 font-medium">ALLFinance v2.0 — Financial Tracker</p>
+        <p className="text-xs text-gray-200 font-medium hidden lg:block">ALLFinance v2.0 — Financial Tracker</p>
       </div>
 
       {/* === CENTER SECTION — Glowing Logo === */}

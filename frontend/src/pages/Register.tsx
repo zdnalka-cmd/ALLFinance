@@ -26,7 +26,7 @@ const Register = () => {
   };
 
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-[#0d0d1a] font-sans">
+    <div className="flex min-h-screen w-full items-center justify-center bg-[#0d0d1a] font-sans p-4">
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111120] p-8 shadow-xl">
         <h2 className="mb-2 text-3xl font-black text-white tracking-tight">Buat Akun</h2>
         <p className="mb-6 text-sm text-gray-400 font-bold">Daftar ke ALLFinance CRM</p>
