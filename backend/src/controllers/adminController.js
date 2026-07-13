@@ -190,8 +190,15 @@ exports.deleteReceiptPhoto = async (req, res) => {
 
 exports.getTrends = async (req, res) => {
   try {
-    const incomes = await prisma.income.findMany({ select: { amount: true, transaction_date: true } });
-    const expenses = await prisma.expense.findMany({ select: { amount: true, transaction_date: true } });
+    // Only fetch transactions from users who are not Admin
+    const incomes = await prisma.income.findMany({
+      where: { user: { role: { not: 'Admin' } } },
+      select: { amount: true, transaction_date: true }
+    });
+    const expenses = await prisma.expense.findMany({
+      where: { user: { role: { not: 'Admin' } } },
+      select: { amount: true, transaction_date: true }
+    });
 
     const monthlyData = {};
 
@@ -229,7 +236,15 @@ exports.getTrends = async (req, res) => {
 exports.getPopularCategories = async (req, res) => {
   try {
     const categories = await prisma.category.findMany({
-      select: { name: true, _count: { select: { incomes: true, expenses: true } } }
+      select: {
+        name: true,
+        _count: {
+          select: {
+            incomes: { where: { user: { role: { not: 'Admin' } } } },
+            expenses: { where: { user: { role: { not: 'Admin' } } } }
+          }
+        }
+      }
     });
 
     const grouped = {};
