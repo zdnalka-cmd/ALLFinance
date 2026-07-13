@@ -75,7 +75,7 @@ export type TranslationKey =
   | 'receipt_photo_deleted' | 'receipt_photo_delete_failed' | 'confirm_delete_profile_picture'
   | 'confirm_delete_receipt_photo'
   | 'receipt' | 'new_expense_recorded' | 'new_income_recorded'
-  | 'label_used' | 'label_limit' | 'label_collected' | 'label_target' | 'label_time_left' | 'label_until';
+  | 'label_used' | 'label_limit' | 'label_collected' | 'label_target' | 'label_time_left' | 'label_until' | 'currency';
 
 export type Translations = Record<TranslationKey, string>;
 
@@ -263,6 +263,7 @@ const translations: Record<'id' | 'en' | 'ja' | 'ms', Translations> = {
     confirm_delete_profile_picture: 'Yakin ingin menghapus foto profil pengguna ini karena tidak pantas?',
     confirm_delete_receipt_photo: 'Yakin ingin menghapus foto kwitansi ini karena tidak pantas?',
     receipt: 'Kwitansi',
+    currency: 'Mata Uang',
     new_expense_recorded: 'Pengeluaran baru dicatat',
     new_income_recorded: 'Pemasukan baru ditambahkan',
   },
@@ -449,6 +450,7 @@ const translations: Record<'id' | 'en' | 'ja' | 'ms', Translations> = {
     confirm_delete_profile_picture: 'Are you sure you want to delete this user\'s profile picture because it is inappropriate?',
     confirm_delete_receipt_photo: 'Are you sure you want to delete this receipt photo because it is inappropriate?',
     receipt: 'Receipt',
+    currency: 'Currency',
     new_expense_recorded: 'New expense recorded',
     new_income_recorded: 'New income added',
   },
@@ -635,6 +637,7 @@ const translations: Record<'id' | 'en' | 'ja' | 'ms', Translations> = {
     confirm_delete_profile_picture: '不適切であるため、このユーザーのプロフィール写真を削除してもよろしいですか？',
     confirm_delete_receipt_photo: '不適切であるため、この領収書の写真を削除してもよろしいですか？',
     receipt: '領収書',
+    currency: '通貨',
     new_expense_recorded: '新しい支出が記録されました',
     new_income_recorded: '新しい収入が追加されました',
   },
@@ -821,6 +824,7 @@ const translations: Record<'id' | 'en' | 'ja' | 'ms', Translations> = {
     confirm_delete_profile_picture: 'Adakah anda pasti mahu memadam foto profil pengguna ini kerana ia tidak sesuai?',
     confirm_delete_receipt_photo: 'Adakah anda pasti mahu memadam foto resit ini kerana ia tidak sesuai?',
     receipt: 'Resit',
+    currency: 'Mata Wang',
     new_expense_recorded: 'Perbelanjaan baru dicatat',
     new_income_recorded: 'Pendapatan baru ditambah',
   },
