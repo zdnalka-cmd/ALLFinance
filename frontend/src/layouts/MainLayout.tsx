@@ -262,7 +262,7 @@ const MainLayout = () => {
             <input type="file" ref={fileInputRef} onChange={handleProfileUpload} className="hidden" accept="image/png,image/jpeg,image/jpg" />
             <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full text-xs font-black text-white overflow-hidden"
               style={{
-                backgroundImage: user?.profile_picture ? `url(${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${user.profile_picture})` : 'linear-gradient(135deg, #6d28d9, #863bff)',
+                backgroundImage: user?.profile_picture ? `url(${user.profile_picture.startsWith('data:') ? user.profile_picture : (import.meta.env.VITE_API_URL || 'http://localhost:5000') + user.profile_picture})` : 'linear-gradient(135deg, #6d28d9, #863bff)',
                 backgroundSize: 'cover', backgroundPosition: 'center',
                 boxShadow: '0 0 10px rgba(134,59,255,0.4)'
               }}>
@@ -289,7 +289,7 @@ const MainLayout = () => {
           <div className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-black text-white overflow-hidden cursor-pointer"
             onClick={() => fileInputRef.current?.click()}
             style={{
-              backgroundImage: user?.profile_picture ? `url(${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${user.profile_picture})` : 'linear-gradient(135deg, #6d28d9, #863bff)',
+              backgroundImage: user?.profile_picture ? `url(${user.profile_picture.startsWith('data:') ? user.profile_picture : (import.meta.env.VITE_API_URL || 'http://localhost:5000') + user.profile_picture})` : 'linear-gradient(135deg, #6d28d9, #863bff)',
               backgroundSize: 'cover', backgroundPosition: 'center'
             }}>
             <input type="file" ref={fileInputRef} onChange={handleProfileUpload} className="hidden" accept="image/png,image/jpeg,image/jpg" />

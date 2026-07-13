@@ -353,7 +353,7 @@ const AdminDashboard = () => {
                             <div className="flex items-center gap-2 sm:gap-3">
                               <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full text-sm font-black text-white bg-cover bg-center overflow-hidden"
                                 style={{
-                                  backgroundImage: u.profile_picture ? `url(${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${u.profile_picture})` : 'linear-gradient(135deg, #6d28d9, #863bff)',
+                                  backgroundImage: u.profile_picture ? `url(${u.profile_picture.startsWith('data:') ? u.profile_picture : (import.meta.env.VITE_API_URL || 'http://localhost:5000') + u.profile_picture})` : 'linear-gradient(135deg, #6d28d9, #863bff)',
                                   backgroundPosition: 'center', backgroundSize: 'cover', backgroundRepeat: 'no-repeat',
                                 }}>
                                 {!u.profile_picture && (u.name?.charAt(0)?.toUpperCase() || 'U')}
