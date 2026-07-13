@@ -51,16 +51,16 @@ const Login = () => {
   };
 
   return (
-    <div className="relative flex flex-col lg:flex-row min-h-screen w-full overflow-y-auto lg:overflow-hidden bg-black font-sans">
+    <div className="relative flex flex-col lg:flex-row min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-black font-sans">
 
       {/* Ambient glow background */}
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {/* Center top glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full"
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] lg:w-[500px] h-[300px] lg:h-[500px] rounded-full"
           style={{ background: 'radial-gradient(circle, rgba(134,59,255,0.25) 0%, rgba(134,59,255,0.05) 50%, transparent 70%)' }}
         />
         {/* Subtle bottom glow */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px]"
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full lg:w-[800px] h-[200px] lg:h-[300px]"
           style={{ background: 'radial-gradient(ellipse, rgba(134,59,255,0.08) 0%, transparent 70%)' }}
         />
       </div>
