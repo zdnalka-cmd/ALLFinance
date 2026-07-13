@@ -24,7 +24,19 @@ const Logo = () => (
 
 const AdminLayout = () => {
   const { user, logout } = useContext(AuthContext);
-  const { t } = useContext(CurrencyContext);
+  const { t, formatCurrency } = useContext(CurrencyContext);
+  
+  const renderNotifMessage = (msg: string) => {
+    if (msg.startsWith('NEW_INCOME|')) {
+      const [, amount, category] = msg.split('|');
+      return `${t('new_income_recorded')}: ${formatCurrency(Number(amount))} (${category})`;
+    }
+    if (msg.startsWith('NEW_EXPENSE|')) {
+      const [, amount, category] = msg.split('|');
+      return `${t('new_expense_recorded')}: ${formatCurrency(Number(amount))} (${category})`;
+    }
+    return msg;
+  };
   const location = useLocation();
   const navigate = useNavigate();
   const [notifications, setNotifications] = React.useState<any[]>([]);
@@ -50,21 +62,21 @@ const AdminLayout = () => {
   }, []);
 
   const handleClearNotifications = async () => {
-    if (!window.confirm('Bersihkan semua notifikasi?')) return;
+    if (!window.confirm(t('confirm_clear_notifs'))) return;
     try {
       const { default: axiosInstance } = await import('../api/axiosInstance');
       await axiosInstance.delete('/notifications');
       setNotifications([]);
-      toast.success('Notifikasi dibersihkan');
+      toast.success(t('notifications_cleared'));
     } catch (error) {
-      toast.error('Gagal membersihkan notifikasi');
+      toast.error(t('notifications_clear_failed'));
     }
   };
 
   const handleLogout = () => {
     logout();
     navigate('/login');
-    toast.success('Admin berhasil keluar');
+    toast.success(t('logout_success'));
   };
 
   const navItems = [
@@ -76,7 +88,7 @@ const AdminLayout = () => {
 
       {/* ── Top Header ── */}
       <header style={{ background: '#0f172a', borderBottom: '1px solid rgba(59,130,246,0.15)' }}
-        className="flex items-center justify-between px-5 py-2.5">
+        className="sticky top-0 z-40 flex items-center justify-between px-3 sm:px-5 py-2.5">
 
         {/* Brand */}
         <div className="flex items-center gap-3">
@@ -114,23 +126,23 @@ const AdminLayout = () => {
             {isNotifOpen && (
               <div className="absolute right-0 mt-2 w-80 rounded-xl border border-blue-500/20 bg-[#0f172a] shadow-xl z-50">
                 <div className="border-b border-blue-500/10 px-4 py-3 flex items-center justify-between bg-blue-500/5 rounded-t-xl">
-                  <h3 className="font-bold text-white text-sm">Notifikasi</h3>
+                  <h3 className="font-bold text-white text-sm">{t('notifications')}</h3>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-blue-400 bg-blue-500/20 px-2 py-0.5 rounded">{notifications.length} Baru</span>
                     {notifications.length > 0 && (
                       <button onClick={handleClearNotifications} className="text-[10px] text-blue-400 hover:text-blue-300">
-                        Bersihkan
+                        {t('clear_all')}
                       </button>
                     )}
                   </div>
                 </div>
                 <div className="max-h-64 overflow-y-auto">
                   {notifications.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-sm text-gray-500">Tidak ada notifikasi</div>
+                    <div className="px-4 py-8 text-center text-sm text-gray-500">{t('no_notifications')}</div>
                   ) : (
                     notifications.map(n => (
                       <div key={n.id} className={`border-b border-white/5 px-4 py-3 ${!n.is_read ? 'bg-blue-500/5' : ''}`}>
-                        <p className="text-xs text-gray-300 leading-relaxed">{n.message}</p>
+                        <p className="text-xs text-gray-300 leading-relaxed">{renderNotifMessage(n.message)}</p>
                         <p className="mt-1 text-[10px] text-gray-500">{new Date(n.created_at).toLocaleString('id-ID')}</p>
                       </div>
                     ))
@@ -195,9 +207,9 @@ const AdminLayout = () => {
       </nav>
 
       {/* ── Main Content Area ── */}
-      <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 relative">
+      <main className="flex-1 overflow-auto p-3 sm:p-5 lg:p-8 relative">
         {/* Background ambient light */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[800px] h-[300px] bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
 
         <div className="relative z-10">
           <Outlet />

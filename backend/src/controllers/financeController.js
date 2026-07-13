@@ -69,7 +69,7 @@ exports.addIncome = async (req, res) => {
     await prisma.notification.create({
       data: {
         user_id: req.user.id,
-        message: `Pemasukan baru ditambahkan: Rp ${income.amount.toLocaleString('id-ID')} (${income.category?.name || 'Lainnya'})`,
+        message: `NEW_INCOME|${income.amount}|${income.category?.name || 'Lainnya'}`,
         type: 'income'
       }
     });
@@ -112,6 +112,41 @@ exports.deleteIncome = async (req, res) => {
     });
 
     res.json({ message: 'Data pemasukan berhasil dihapus' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.bulkDeleteIncomes = async (req, res) => {
+  try {
+    const { ids, password } = req.body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Tidak ada data yang dipilih untuk dihapus' });
+    }
+
+    if (!password) {
+      return res.status(400).json({ error: 'Sandi akun diperlukan untuk menghapus pemasukan' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) {
+      return res.status(404).json({ error: 'Pengguna tidak ditemukan' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Kata sandi salah. Penghapusan dibatalkan demi keamanan.' });
+    }
+
+    const result = await prisma.income.deleteMany({
+      where: { 
+        id: { in: ids },
+        user_id: req.user.id
+      }
+    });
+
+    res.json({ message: `${result.count} data pemasukan berhasil dihapus` });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -173,7 +208,7 @@ exports.addExpense = async (req, res) => {
     await prisma.notification.create({
       data: {
         user_id: req.user.id,
-        message: `Pengeluaran baru dicatat: Rp ${expense.amount.toLocaleString('id-ID')} (${expense.category?.name || 'Lainnya'})`,
+        message: `NEW_EXPENSE|${expense.amount}|${expense.category?.name || 'Lainnya'}`,
         type: 'expense'
       }
     });
@@ -216,6 +251,41 @@ exports.deleteExpense = async (req, res) => {
     });
 
     res.json({ message: 'Data pengeluaran berhasil dihapus' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.bulkDeleteExpenses = async (req, res) => {
+  try {
+    const { ids, password } = req.body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Tidak ada data yang dipilih untuk dihapus' });
+    }
+
+    if (!password) {
+      return res.status(400).json({ error: 'Sandi akun diperlukan untuk menghapus pengeluaran' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) {
+      return res.status(404).json({ error: 'Pengguna tidak ditemukan' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Kata sandi salah. Penghapusan dibatalkan demi keamanan.' });
+    }
+
+    const result = await prisma.expense.deleteMany({
+      where: { 
+        id: { in: ids },
+        user_id: req.user.id
+      }
+    });
+
+    res.json({ message: `${result.count} data pengeluaran berhasil dihapus` });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

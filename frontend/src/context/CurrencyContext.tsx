@@ -1,4 +1,6 @@
 import React, { createContext, useState, type ReactNode } from 'react';
+import { AuthContext } from './AuthContext';
+import axiosInstance from '../api/axiosInstance';
 
 export interface Currency {
   code: string;
@@ -52,7 +54,28 @@ export type TranslationKey =
   | 'congrats' | 'target_achieved' | 'continue_btn'
   | 'send_report' | 'report_subject' | 'report_subject_placeholder'
   | 'report_message' | 'report_message_placeholder' | 'sending'
-  | 'anti_spam_warning' | 'anti_spam_rule_1' | 'anti_spam_rule_2' | 'anti_spam_rule_3';
+  | 'anti_spam_warning' | 'anti_spam_rule_1' | 'anti_spam_rule_2' | 'anti_spam_rule_3'
+  | 'more_options' | 'feature_coming_soon' | 'dashboard_name_updated' | 'dashboard_name_update_failed'
+  | 'failed_load_dashboard' | 'fill_target_form' | 'target_saved' | 'target_save_failed'
+  | 'confirm_delete_target' | 'target_deleted' | 'target_delete_failed'
+  | 'delete_income' | 'delete_expense' | 'security_password_prompt' | 'account_password'
+  | 'confirm_delete' | 'income_added_success' | 'income_added_failed'
+  | 'income_deleted_success' | 'income_deleted_failed' | 'expense_added_success'
+  | 'expense_added_failed' | 'expense_deleted_success' | 'expense_deleted_failed'
+  | 'failed_load_data' | 'receipt_photo_optional' | 'fill_report_form' | 'report_sent_success'
+  | 'report_sent_failed' | 'notifications_cleared' | 'notifications_clear_failed'
+  | 'logout_success' | 'uploading_photo' | 'photo_uploaded_success' | 'photo_upload_failed'
+  | 'confirm_clear_notifs' | 'clear_all' | 'no_notifications' | 'notifications'
+  | 'admin_load_failed' | 'account_activated' | 'account_suspended' | 'status_update_failed'
+  | 'account_deleted' | 'account_delete_failed' | 'receipt_load_failed' | 'reply_empty'
+  | 'reply_sent' | 'reply_failed' | 'report_deleted' | 'report_delete_failed'
+  | 'delete_account_confirm' | 'delete_report_confirm' | 'account_suspended_title'
+  | 'account_suspended_desc' | 'report_to_admin' | 'delete_profile_picture'
+  | 'delete_receipt_photo' | 'profile_picture_deleted' | 'profile_picture_delete_failed'
+  | 'receipt_photo_deleted' | 'receipt_photo_delete_failed' | 'confirm_delete_profile_picture'
+  | 'confirm_delete_receipt_photo'
+  | 'receipt' | 'new_expense_recorded' | 'new_income_recorded'
+  | 'label_used' | 'label_limit' | 'label_collected' | 'label_target' | 'label_time_left' | 'label_until';
 
 export type Translations = Record<TranslationKey, string>;
 
@@ -169,6 +192,79 @@ const translations: Record<'id' | 'en' | 'ja' | 'ms', Translations> = {
     anti_spam_rule_1: 'Anda memiliki batas maksimal 3 kuota laporan.',
     anti_spam_rule_2: 'Jika kuota habis, Anda harus menunggu 2 hari.',
     anti_spam_rule_3: 'Jika melanggar lebih dari 3 kali, akun akan dihapus otomatis!',
+    more_options: 'Opsi Lainnya',
+    feature_coming_soon: 'Fitur lainnya akan hadir',
+    dashboard_name_updated: 'Nama dasbor berhasil diperbarui',
+    dashboard_name_update_failed: 'Gagal memperbarui nama dasbor',
+    failed_load_dashboard: 'Gagal memuat data dasbor',
+    fill_target_form: 'Lengkapi form target',
+    target_saved: 'Target berhasil disimpan',
+    target_save_failed: 'Gagal menyimpan target',
+    confirm_delete_target: 'Apakah Anda yakin ingin menghapus target ini?',
+    target_deleted: 'Target berhasil dihapus',
+    target_delete_failed: 'Gagal menghapus target',
+    label_used: 'Terpakai',
+    label_limit: 'Batas',
+    label_collected: 'Terkumpul',
+    label_target: 'Target',
+    label_time_left: 'Sisa Waktu',
+    label_until: 's/d',
+    delete_income: 'Hapus Pemasukan',
+    delete_expense: 'Hapus Pengeluaran',
+    security_password_prompt: 'Untuk alasan keamanan, masukkan kata sandi akun Anda untuk mengonfirmasi penghapusan data ini.',
+    account_password: 'Kata Sandi Akun',
+    confirm_delete: 'Konfirmasi Hapus',
+    income_added_success: 'Pemasukan berhasil ditambahkan!',
+    income_added_failed: 'Gagal menambahkan pemasukan',
+    income_deleted_success: 'Pemasukan berhasil dihapus',
+    income_deleted_failed: 'Gagal menghapus pemasukan',
+    expense_added_success: 'Pengeluaran berhasil ditambahkan!',
+    expense_added_failed: 'Gagal mencatat pengeluaran',
+    expense_deleted_success: 'Pengeluaran berhasil dihapus',
+    expense_deleted_failed: 'Gagal menghapus pengeluaran',
+    failed_load_data: 'Gagal memuat data',
+    receipt_photo_optional: 'Foto Kwitansi/Kenangan (Opsional)',
+    fill_report_form: 'Harap isi subjek dan pesan laporan',
+    report_sent_success: 'Laporan berhasil dikirim ke Admin',
+    report_sent_failed: 'Gagal mengirim laporan',
+    notifications_cleared: 'Notifikasi dibersihkan',
+    notifications_clear_failed: 'Gagal membersihkan notifikasi',
+    logout_success: 'Berhasil keluar',
+    uploading_photo: 'Mengunggah foto...',
+    photo_uploaded_success: 'Foto profil berhasil diperbarui',
+    photo_upload_failed: 'Gagal mengunggah foto profil',
+    confirm_clear_notifs: 'Bersihkan semua notifikasi?',
+    clear_all: 'Bersihkan Semua',
+    no_notifications: 'Belum ada notifikasi',
+    notifications: 'Notifikasi',
+    admin_load_failed: 'Gagal memuat data admin',
+    account_activated: 'Akun berhasil diaktifkan',
+    account_suspended: 'Akun berhasil ditangguhkan',
+    status_update_failed: 'Gagal mengubah status akun',
+    account_deleted: 'Akun berhasil dihapus',
+    account_delete_failed: 'Gagal menghapus akun',
+    receipt_load_failed: 'Gagal memuat kwitansi pengguna',
+    reply_empty: 'Teks balasan kosong',
+    reply_sent: 'Balasan terkirim',
+    reply_failed: 'Gagal mengirim balasan',
+    report_deleted: 'Laporan berhasil dihapus',
+    report_delete_failed: 'Gagal menghapus laporan',
+    delete_account_confirm: 'Yakin ingin menghapus akun ini secara permanen beserta semua transaksinya?',
+    delete_report_confirm: 'Yakin ingin menghapus laporan ini?',
+    account_suspended_title: 'Akun Ditangguhkan',
+    account_suspended_desc: 'Akun Anda telah dikunci oleh administrator karena pelanggaran atau alasan keamanan. Anda tidak dapat melakukan aktivitas apapun di dalam aplikasi.',
+    report_to_admin: 'Lapor ke Admin',
+    delete_profile_picture: 'Hapus Foto Profil',
+    delete_receipt_photo: 'Hapus Foto Kwitansi',
+    profile_picture_deleted: 'Foto profil berhasil dihapus',
+    profile_picture_delete_failed: 'Gagal menghapus foto profil',
+    receipt_photo_deleted: 'Foto kwitansi berhasil dihapus',
+    receipt_photo_delete_failed: 'Gagal menghapus foto kwitansi',
+    confirm_delete_profile_picture: 'Yakin ingin menghapus foto profil pengguna ini karena tidak pantas?',
+    confirm_delete_receipt_photo: 'Yakin ingin menghapus foto kwitansi ini karena tidak pantas?',
+    receipt: 'Kwitansi',
+    new_expense_recorded: 'Pengeluaran baru dicatat',
+    new_income_recorded: 'Pemasukan baru ditambahkan',
   },
   en: {
     dashboard: 'Dashboard',
@@ -282,6 +378,79 @@ const translations: Record<'id' | 'en' | 'ja' | 'ms', Translations> = {
     anti_spam_rule_1: 'You have a maximum limit of 3 report quotas.',
     anti_spam_rule_2: 'If the quota is depleted, you must wait 2 days.',
     anti_spam_rule_3: 'If you violate this more than 3 times, your account will be automatically deleted!',
+    more_options: 'More Options',
+    feature_coming_soon: 'Other features are coming soon',
+    dashboard_name_updated: 'Dashboard name updated successfully',
+    dashboard_name_update_failed: 'Failed to update dashboard name',
+    failed_load_dashboard: 'Failed to load dashboard data',
+    fill_target_form: 'Please fill the target form',
+    target_saved: 'Target saved successfully',
+    target_save_failed: 'Failed to save target',
+    confirm_delete_target: 'Are you sure you want to delete this target?',
+    target_deleted: 'Target deleted successfully',
+    target_delete_failed: 'Failed to delete target',
+    label_used: 'Used',
+    label_limit: 'Limit',
+    label_collected: 'Collected',
+    label_target: 'Target',
+    label_time_left: 'Time Left',
+    label_until: 'until',
+    delete_income: 'Delete Income',
+    delete_expense: 'Delete Expense',
+    security_password_prompt: 'For security reasons, enter your account password to confirm data deletion.',
+    account_password: 'Account Password',
+    confirm_delete: 'Confirm Delete',
+    income_added_success: 'Income added successfully!',
+    income_added_failed: 'Failed to add income',
+    income_deleted_success: 'Income deleted successfully',
+    income_deleted_failed: 'Failed to delete income',
+    expense_added_success: 'Expense added successfully!',
+    expense_added_failed: 'Failed to record expense',
+    expense_deleted_success: 'Expense deleted successfully',
+    expense_deleted_failed: 'Failed to delete expense',
+    failed_load_data: 'Failed to load data',
+    receipt_photo_optional: 'Receipt/Memory Photo (Optional)',
+    fill_report_form: 'Please fill in the report subject and message',
+    report_sent_success: 'Report sent to Admin successfully',
+    report_sent_failed: 'Failed to send report',
+    notifications_cleared: 'Notifications cleared',
+    notifications_clear_failed: 'Failed to clear notifications',
+    logout_success: 'Logged out successfully',
+    uploading_photo: 'Uploading photo...',
+    photo_uploaded_success: 'Profile photo updated successfully',
+    photo_upload_failed: 'Failed to upload profile photo',
+    confirm_clear_notifs: 'Clear all notifications?',
+    clear_all: 'Clear All',
+    no_notifications: 'No notifications yet',
+    notifications: 'Notifications',
+    admin_load_failed: 'Failed to load admin data',
+    account_activated: 'Account activated successfully',
+    account_suspended: 'Account suspended successfully',
+    status_update_failed: 'Failed to update account status',
+    account_deleted: 'Account deleted successfully',
+    account_delete_failed: 'Failed to delete account',
+    receipt_load_failed: 'Failed to load user receipts',
+    reply_empty: 'Reply text is empty',
+    reply_sent: 'Reply sent',
+    reply_failed: 'Failed to send reply',
+    report_deleted: 'Report deleted successfully',
+    report_delete_failed: 'Failed to delete report',
+    delete_account_confirm: 'Are you sure you want to permanently delete this account and all its transactions?',
+    delete_report_confirm: 'Are you sure you want to delete this report?',
+    account_suspended_title: 'Account Suspended',
+    account_suspended_desc: 'Your account has been locked by the administrator due to a violation or security reasons. You cannot perform any activities within the application.',
+    report_to_admin: 'Report to Admin',
+    delete_profile_picture: 'Delete Profile Picture',
+    delete_receipt_photo: 'Delete Receipt Photo',
+    profile_picture_deleted: 'Profile picture deleted successfully',
+    profile_picture_delete_failed: 'Failed to delete profile picture',
+    receipt_photo_deleted: 'Receipt photo deleted successfully',
+    receipt_photo_delete_failed: 'Failed to delete receipt photo',
+    confirm_delete_profile_picture: 'Are you sure you want to delete this user\'s profile picture because it is inappropriate?',
+    confirm_delete_receipt_photo: 'Are you sure you want to delete this receipt photo because it is inappropriate?',
+    receipt: 'Receipt',
+    new_expense_recorded: 'New expense recorded',
+    new_income_recorded: 'New income added',
   },
   ja: {
     dashboard: 'ダッシュボード',
@@ -395,6 +564,79 @@ const translations: Record<'id' | 'en' | 'ja' | 'ms', Translations> = {
     anti_spam_rule_1: 'レポートのクオータの最大制限は3です。',
     anti_spam_rule_2: 'クオータが尽きた場合、2日間待つ必要があります。',
     anti_spam_rule_3: 'これに3回以上違反すると、アカウントは自動的に削除されます！',
+    more_options: 'その他のオプション',
+    feature_coming_soon: 'その他の機能は近日公開予定です',
+    dashboard_name_updated: 'ダッシュボード名が正常に更新されました',
+    dashboard_name_update_failed: 'ダッシュボード名の更新に失敗しました',
+    failed_load_dashboard: 'ダッシュボードデータの読み込みに失敗しました',
+    fill_target_form: '目標フォームに記入してください',
+    target_saved: '目標が正常に保存されました',
+    target_save_failed: '目標の保存に失敗しました',
+    confirm_delete_target: 'この目標を削除してもよろしいですか？',
+    target_deleted: '目標が正常に削除されました',
+    target_delete_failed: '目標の削除に失敗しました',
+    label_used: '使用済み',
+    label_limit: '上限',
+    label_collected: '積立済み',
+    label_target: '目標',
+    label_time_left: '残り時間',
+    label_until: '〜',
+    delete_income: '収入を削除',
+    delete_expense: '支出を削除',
+    security_password_prompt: 'セキュリティ上の理由から、データの削除を確認するためにアカウントのパスワードを入力してください。',
+    account_password: 'アカウントのパスワード',
+    confirm_delete: '削除を確認',
+    income_added_success: '収入が正常に追加されました！',
+    income_added_failed: '収入の追加に失敗しました',
+    income_deleted_success: '収入が正常に削除されました',
+    income_deleted_failed: '収入の削除に失敗しました',
+    expense_added_success: '支出が正常に追加されました！',
+    expense_added_failed: '支出の記録に失敗しました',
+    expense_deleted_success: '支出が正常に削除されました',
+    expense_deleted_failed: '支出の削除に失敗しました',
+    failed_load_data: 'データの読み込みに失敗しました',
+    receipt_photo_optional: '領収書/思い出の写真（任意）',
+    fill_report_form: 'レポートの件名とメッセージを入力してください',
+    report_sent_success: '管理者にレポートを送信しました',
+    report_sent_failed: 'レポートの送信に失敗しました',
+    notifications_cleared: '通知をクリアしました',
+    notifications_clear_failed: '通知のクリアに失敗しました',
+    logout_success: '正常にログアウトしました',
+    uploading_photo: '写真をアップロード中...',
+    photo_uploaded_success: 'プロフィール写真が正常に更新されました',
+    photo_upload_failed: 'プロフィール写真のアップロードに失敗しました',
+    confirm_clear_notifs: 'すべての通知をクリアしますか？',
+    clear_all: 'すべてクリア',
+    no_notifications: 'まだ通知はありません',
+    notifications: '通知',
+    admin_load_failed: '管理データの読み込みに失敗しました',
+    account_activated: 'アカウントが正常に有効化されました',
+    account_suspended: 'アカウントが正常に停止されました',
+    status_update_failed: 'アカウントのステータスの更新に失敗しました',
+    account_deleted: 'アカウントが正常に削除されました',
+    account_delete_failed: 'アカウントの削除に失敗しました',
+    receipt_load_failed: 'ユーザーの領収書の読み込みに失敗しました',
+    reply_empty: '返信テキストが空です',
+    reply_sent: '返信を送信しました',
+    reply_failed: '返信の送信に失敗しました',
+    report_deleted: 'レポートが正常に削除されました',
+    report_delete_failed: 'レポートの削除に失敗しました',
+    delete_account_confirm: 'このアカウントとすべてのトランザクションを完全に削除してもよろしいですか？',
+    delete_report_confirm: 'このレポートを削除してもよろしいですか？',
+    account_suspended_title: 'アカウントが停止されました',
+    account_suspended_desc: '違反またはセキュリティ上の理由により、管理者によってアカウントがロックされました。アプリケーション内でいかなるアクティビティも実行できません。',
+    report_to_admin: '管理者に報告',
+    delete_profile_picture: 'プロフィール写真を削除',
+    delete_receipt_photo: '領収書の写真を削除',
+    profile_picture_deleted: 'プロフィール写真が正常に削除されました',
+    profile_picture_delete_failed: 'プロフィール写真の削除に失敗しました',
+    receipt_photo_deleted: '領収書の写真が正常に削除されました',
+    receipt_photo_delete_failed: '領収書の写真の削除に失敗しました',
+    confirm_delete_profile_picture: '不適切であるため、このユーザーのプロフィール写真を削除してもよろしいですか？',
+    confirm_delete_receipt_photo: '不適切であるため、この領収書の写真を削除してもよろしいですか？',
+    receipt: '領収書',
+    new_expense_recorded: '新しい支出が記録されました',
+    new_income_recorded: '新しい収入が追加されました',
   },
   ms: {
     dashboard: 'Papan Pemuka',
@@ -508,6 +750,79 @@ const translations: Record<'id' | 'en' | 'ja' | 'ms', Translations> = {
     anti_spam_rule_1: 'Anda mempunyai had maksimum 3 kuota laporan.',
     anti_spam_rule_2: 'Jika kuota habis, anda mesti menunggu 2 hari.',
     anti_spam_rule_3: 'Jika melanggar lebih dari 3 kali, akaun akan dipadam secara automatik!',
+    more_options: 'Pilihan Lain',
+    feature_coming_soon: 'Ciri-ciri lain akan datang tidak lama lagi',
+    dashboard_name_updated: 'Nama papan pemuka berjaya dikemas kini',
+    dashboard_name_update_failed: 'Gagal mengemas kini nama papan pemuka',
+    failed_load_dashboard: 'Gagal memuatkan data papan pemuka',
+    fill_target_form: 'Sila lengkapkan borang sasaran',
+    target_saved: 'Sasaran berjaya disimpan',
+    target_save_failed: 'Gagal menyimpan sasaran',
+    confirm_delete_target: 'Adakah anda pasti mahu memadam sasaran ini?',
+    target_deleted: 'Sasaran berjaya dipadam',
+    target_delete_failed: 'Gagal memadam sasaran',
+    label_used: 'Digunakan',
+    label_limit: 'Had',
+    label_collected: 'Terkumpul',
+    label_target: 'Sasaran',
+    label_time_left: 'Masa Tinggal',
+    label_until: 'hingga',
+    delete_income: 'Padam Pendapatan',
+    delete_expense: 'Padam Perbelanjaan',
+    security_password_prompt: 'Atas sebab keselamatan, masukkan kata laluan akaun anda untuk mengesahkan pemadaman data ini.',
+    account_password: 'Kata Laluan Akaun',
+    confirm_delete: 'Sahkan Pemadaman',
+    income_added_success: 'Pendapatan berjaya ditambah!',
+    income_added_failed: 'Gagal menambah pendapatan',
+    income_deleted_success: 'Pendapatan berjaya dipadam',
+    income_deleted_failed: 'Gagal memadam pendapatan',
+    expense_added_success: 'Perbelanjaan berjaya ditambah!',
+    expense_added_failed: 'Gagal merekodkan perbelanjaan',
+    expense_deleted_success: 'Perbelanjaan berjaya dipadam',
+    expense_deleted_failed: 'Gagal memadam perbelanjaan',
+    failed_load_data: 'Gagal memuatkan data',
+    receipt_photo_optional: 'Foto Resit/Kenangan (Pilihan)',
+    fill_report_form: 'Sila isi subjek dan mesej laporan',
+    report_sent_success: 'Laporan berjaya dihantar ke Admin',
+    report_sent_failed: 'Gagal menghantar laporan',
+    notifications_cleared: 'Notifikasi dibersihkan',
+    notifications_clear_failed: 'Gagal membersihkan notifikasi',
+    logout_success: 'Berjaya log keluar',
+    uploading_photo: 'Memuat naik foto...',
+    photo_uploaded_success: 'Foto profil berjaya dikemas kini',
+    photo_upload_failed: 'Gagal memuat naik foto profil',
+    confirm_clear_notifs: 'Bersihkan semua notifikasi?',
+    clear_all: 'Bersihkan Semua',
+    no_notifications: 'Tiada notifikasi lagi',
+    notifications: 'Notifikasi',
+    admin_load_failed: 'Gagal memuatkan data admin',
+    account_activated: 'Akaun berjaya diaktifkan',
+    account_suspended: 'Akaun berjaya digantung',
+    status_update_failed: 'Gagal mengemas kini status akaun',
+    account_deleted: 'Akaun berjaya dipadam',
+    account_delete_failed: 'Gagal memadam akaun',
+    receipt_load_failed: 'Gagal memuatkan resit pengguna',
+    reply_empty: 'Teks balasan kosong',
+    reply_sent: 'Balasan dihantar',
+    reply_failed: 'Gagal menghantar balasan',
+    report_deleted: 'Laporan berjaya dipadam',
+    report_delete_failed: 'Gagal memadam laporan',
+    delete_account_confirm: 'Adakah anda pasti mahu memadam akaun ini secara kekal berserta semua transaksinya?',
+    delete_report_confirm: 'Adakah anda pasti mahu memadam laporan ini?',
+    account_suspended_title: 'Akaun Digantung',
+    account_suspended_desc: 'Akaun anda telah dikunci oleh pentadbir kerana pelanggaran atau sebab keselamatan. Anda tidak boleh melakukan sebarang aktiviti dalam aplikasi.',
+    report_to_admin: 'Lapor ke Admin',
+    delete_profile_picture: 'Padam Foto Profil',
+    delete_receipt_photo: 'Padam Foto Resit',
+    profile_picture_deleted: 'Foto profil berjaya dipadam',
+    profile_picture_delete_failed: 'Gagal memadam foto profil',
+    receipt_photo_deleted: 'Foto resit berjaya dipadam',
+    receipt_photo_delete_failed: 'Gagal memadam foto resit',
+    confirm_delete_profile_picture: 'Adakah anda pasti mahu memadam foto profil pengguna ini kerana ia tidak sesuai?',
+    confirm_delete_receipt_photo: 'Adakah anda pasti mahu memadam foto resit ini kerana ia tidak sesuai?',
+    receipt: 'Resit',
+    new_expense_recorded: 'Perbelanjaan baru dicatat',
+    new_income_recorded: 'Pendapatan baru ditambah',
   },
 };
 
@@ -526,18 +841,44 @@ export const CurrencyContext = createContext<CurrencyContextType>({
 });
 
 export const CurrencyProvider = ({ children }: { children: ReactNode }) => {
-  const [currentCurrency, setCurrentCurrencyState] = useState<Currency>(() => {
-    const saved = localStorage.getItem('app_currency');
+  const { user, updateUser } = React.useContext(AuthContext);
+  
+  const storageKey = user ? `app_currency_${user.id}` : 'app_currency_guest';
+
+  const [currentCurrency, setCurrentCurrencyState] = useState<Currency>(currencies[0]);
+
+  React.useEffect(() => {
+    if (user && user.currency) {
+      const found = currencies.find(c => c.code === user.currency);
+      if (found) {
+        setCurrentCurrencyState(found);
+        localStorage.setItem(storageKey, user.currency);
+        return;
+      }
+    }
+
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       const found = currencies.find(c => c.code === saved);
-      if (found) return found;
+      if (found) setCurrentCurrencyState(found);
+    } else {
+      setCurrentCurrencyState(currencies[0]);
     }
-    return currencies[0];
-  });
+  }, [storageKey, user]);
 
-  const setCurrentCurrency = (currency: Currency) => {
+  const setCurrentCurrency = async (currency: Currency) => {
     setCurrentCurrencyState(currency);
-    localStorage.setItem('app_currency', currency.code);
+    localStorage.setItem(storageKey, currency.code);
+    if (user) {
+      try {
+        const response = await axiosInstance.put('/auth/profile', { currency: currency.code });
+        if (response.data && response.data.user) {
+          updateUser(response.data.user);
+        }
+      } catch (error) {
+        console.error('Failed to save currency to profile', error);
+      }
+    }
   };
 
   const formatCurrency = (amount: number, compact: boolean = false) => {

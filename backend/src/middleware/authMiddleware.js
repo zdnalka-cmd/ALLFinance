@@ -22,7 +22,10 @@ const authMiddleware = async (req, res, next) => {
     }
 
     if (user.is_suspended) {
-      return res.status(403).json({ message: 'Akun Anda telah ditangguhkan' });
+      const isAllowed = req.originalUrl.includes('/api/auth/me') || (req.method === 'POST' && req.originalUrl.includes('/api/reports'));
+      if (!isAllowed) {
+        return res.status(403).json({ message: 'Akun Anda telah ditangguhkan', is_suspended: true });
+      }
     }
 
     // Update last_active asynchronously (don't await to avoid blocking)

@@ -17,12 +17,14 @@ router.route('/incomes')
   .get(financeController.getIncomes)
   .post(financeController.addIncome);
 
+router.post('/incomes/bulk-delete', financeController.bulkDeleteIncomes);
 router.delete('/incomes/:id', financeController.deleteIncome);
 
 router.route('/expenses')
   .get(financeController.getExpenses)
   .post(upload.single('receipt'), financeController.addExpense);
 
+router.post('/expenses/bulk-delete', financeController.bulkDeleteExpenses);
 router.delete('/expenses/:id', financeController.deleteExpense);
 
 router.get('/dashboard', financeController.getDashboardStats);

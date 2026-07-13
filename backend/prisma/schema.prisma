@@ -17,6 +17,7 @@ model User {
   created_at         DateTime          @default(now())
   dashboard_name     String?
   profile_picture    String?
+  currency           String            @default("IDR")
   is_suspended       Boolean           @default(false)
   last_active        DateTime?         @default(now())
   report_exhaustions Int               @default(0)

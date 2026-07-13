@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import { AuthContext } from '../context/AuthContext';
 
@@ -7,6 +8,7 @@ const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -60,14 +62,23 @@ const Register = () => {
           </div>
           <div>
             <label className="mb-1 block text-sm font-bold text-gray-200">Kata Sandi</label>
-            <input 
-              type="password" 
-              className="w-full rounded-lg border border-white/15 p-2.5 font-medium outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500" 
-              placeholder="••••••••" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div className="relative">
+              <input 
+                type={showPassword ? 'text' : 'password'} 
+                className="w-full rounded-lg border border-white/15 p-2.5 pr-10 font-medium outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500" 
+                placeholder="••••••••" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
           <button 
             type="submit" 

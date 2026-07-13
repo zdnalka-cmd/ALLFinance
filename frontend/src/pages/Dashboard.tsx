@@ -3,7 +3,7 @@ import {
   ComposedChart, LineChart, Line, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
-import { Sparkles, Pencil, CheckCircle2, Target, X, Trash2, AlertTriangle } from 'lucide-react';
+import { Sparkles, Pencil, CheckCircle2, Target, X, Trash2, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axiosInstance from '../api/axiosInstance';
 import { AuthContext } from '../context/AuthContext';
@@ -30,6 +30,7 @@ const Dashboard = () => {
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState('');
+  const [showBalances, setShowBalances] = useState(true);
 
   const [showTargetModal, setShowTargetModal] = useState(false);
   const [targetName, setTargetName] = useState('');
@@ -54,9 +55,9 @@ const Dashboard = () => {
       const res = await axiosInstance.put('/auth/profile', { dashboard_name: editName });
       if (user) updateUser(res.data.user);
       setIsEditingName(false);
-      toast.success('Nama dasbor berhasil diperbarui');
+      toast.success(t('dashboard_name_updated'));
     } catch {
-      toast.error('Gagal memperbarui nama dasbor');
+      toast.error(t('dashboard_name_update_failed'));
     }
   };
 
@@ -70,7 +71,7 @@ const Dashboard = () => {
       const response = await axiosInstance.get('/finance/dashboard');
       setDashboardData(response.data);
     } catch {
-      toast.error('Gagal memuat data dasbor');
+      toast.error(t('failed_load_dashboard'));
     } finally {
       setLoading(false);
     }
@@ -78,7 +79,7 @@ const Dashboard = () => {
 
   const handleSetTarget = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!targetAmount || !targetName) return toast.error('Lengkapi form target');
+    if (!targetAmount || !targetName) return toast.error(t('fill_target_form'));
     try {
       setIsSettingTarget(true);
       await axiosInstance.post('/finance/targets', {
@@ -87,27 +88,27 @@ const Dashboard = () => {
         amount: targetAmount,
         period: targetPeriod
       });
-      toast.success('Target berhasil disimpan');
+      toast.success(t('target_saved'));
       setShowTargetModal(false);
       setTargetName('');
       setTargetAmount('');
       setTargetType('expense');
       fetchDashboardData();
     } catch {
-      toast.error('Gagal menyimpan target');
+      toast.error(t('target_save_failed'));
     } finally {
       setIsSettingTarget(false);
     }
   };
 
   const handleDeleteTarget = async (id: string, skipConfirm = false) => {
-    if (!skipConfirm && !confirm('Apakah Anda yakin ingin menghapus target ini?')) return;
+    if (!skipConfirm && !confirm(t('confirm_delete_target'))) return;
     try {
       await axiosInstance.delete(`/finance/targets/${id}`);
-      toast.success('Target berhasil dihapus');
+      toast.success(t('target_deleted'));
       fetchDashboardData();
     } catch {
-      toast.error('Gagal menghapus target');
+      toast.error(t('target_delete_failed'));
     }
   };
 
@@ -149,14 +150,19 @@ const Dashboard = () => {
     return { ...d, displayName: translated, color };
   });
 
-  // Metric Card component
-  const MetricCard = ({ title, value, subtext }: { title: string; value: string; subtext?: string }) => (
-    <div className="rounded-xl border border-white/10 bg-[#111120] p-5 shadow-sm flex flex-col justify-center hover:border-purple-500/40 transition-all group">
-      <p className="text-xs text-gray-400 font-bold mb-1 uppercase tracking-wider">{title}</p>
-      <h3 className="text-xl font-black text-white tracking-tight group-hover:text-purple-300 transition-colors">{value}</h3>
-      {subtext && <p className="text-xs text-gray-500 font-medium mt-1">{subtext}</p>}
-    </div>
-  );
+  // Metric Card component — font auto shrinks on long values
+  const MetricCard = ({ title, value, subtext }: { title: string; value: string; subtext?: string }) => {
+    const displayValue = showBalances ? value : '••••••';
+    return (
+      <div className="rounded-xl border border-white/10 bg-[#111120] p-3 sm:p-4 shadow-sm flex flex-col justify-center hover:border-purple-500/40 transition-all group overflow-hidden">
+        <p className="text-[9px] sm:text-[10px] text-gray-400 font-bold mb-1 uppercase tracking-wider truncate">{title}</p>
+        <h3 className="font-black text-white tracking-tight group-hover:text-purple-300 transition-colors leading-tight truncate text-sm sm:text-lg lg:text-xl">
+          {displayValue}
+        </h3>
+        {subtext && <p className="text-[9px] sm:text-[10px] text-gray-500 font-medium mt-1 truncate">{subtext}</p>}
+      </div>
+    );
+  };
 
   if (loading) return <div className="flex items-center justify-center h-64"><p className="font-bold text-gray-400">{t('loading_dashboard')}</p></div>;
 
@@ -194,15 +200,30 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
-
+          
+          <button 
+            onClick={() => toast(t('feature_coming_soon'), { icon: '🚀' })}
+            className="flex items-center gap-2 rounded-lg bg-[#111120] border border-white/10 px-4 py-2 text-xs font-bold text-gray-400 hover:text-white hover:border-purple-500/50 transition-all shadow-sm"
+          >
+            <Sparkles size={14} className="text-purple-500" />
+            {t('more_options')}
+          </button>
         </div>
         <p className="text-sm text-gray-500">{t('welcome_tagline')}</p>
       </div>
 
       {/* Metric Cards */}
       <div className="mb-6">
-        <h2 className="text-base font-black text-white tracking-tight mb-4 uppercase text-xs text-gray-400">{t('all_totals')}</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="flex items-center gap-2 mb-3">
+          <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest m-0">{t('all_totals')}</h2>
+          <button 
+            onClick={() => setShowBalances(!showBalances)} 
+            className="text-gray-400 hover:text-purple-400 transition-colors p-1 rounded-md hover:bg-white/5 flex items-center justify-center"
+          >
+            {showBalances ? <Eye size={14} /> : <EyeOff size={14} />}
+          </button>
+        </div>
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
           <MetricCard title={t('total_income')} value={formatCurrency(dashboardData?.totals?.totalRevenue || 0)} subtext={t('income_ytd')} />
           <MetricCard title={t('total_expense')} value={formatCurrency(dashboardData?.totals?.totalExpenses || 0)} subtext={t('expense_ytd')} />
           <MetricCard title={t('net_profit')} value={formatCurrency(dashboardData?.totals?.netProfit || 0)} />
@@ -226,34 +247,34 @@ const Dashboard = () => {
               <h3 className="font-black text-white text-sm">{t('expense_limit')}</h3>
             </div>
             
-            {dashboardData?.activeTargets?.filter((t: any) => t.type === 'expense').length > 0 ? (
+            {dashboardData?.activeTargets?.filter((tgt: any) => tgt.type === 'expense').length > 0 ? (
               <div className="flex flex-col gap-4">
-                {dashboardData.activeTargets.filter((t: any) => t.type === 'expense').map((t: any) => (
-                  <div key={t.id} className="bg-[#1a1a2e] rounded-lg p-4 border border-white/5">
+                {dashboardData.activeTargets.filter((tgt: any) => tgt.type === 'expense').map((tgt: any) => (
+                  <div key={tgt.id} className="bg-[#1a1a2e] rounded-lg p-4 border border-white/5">
                     <div className="flex justify-between items-start mb-2">
-                      <h4 className="text-white font-bold text-sm">{t.name}</h4>
-                      <button onClick={() => handleDeleteTarget(t.id)} className="text-gray-500 hover:text-red-400"><Trash2 size={14}/></button>
+                      <h4 className="text-white font-bold text-sm">{tgt.name}</h4>
+                      <button onClick={() => handleDeleteTarget(tgt.id)} className="text-gray-500 hover:text-red-400"><Trash2 size={14}/></button>
                     </div>
                     <div className="flex justify-between items-end mb-2 text-sm font-bold">
                       <div>
-                        <span className="text-gray-400 block text-[10px] uppercase">Terpakai</span>
-                        <span className="text-white text-base">{formatCurrency(t.currentAmount)}</span>
+                        <span className="text-gray-400 block text-[10px] uppercase">{t('label_used')}</span>
+                        <span className="text-white text-sm leading-tight break-all">{formatCurrency(tgt.currentAmount)}</span>
                       </div>
                       <div className="text-right">
-                        <span className="text-gray-400 block text-[10px] uppercase">Batas</span>
-                        <span className="text-gray-300">{formatCurrency(t.amount)}</span>
+                        <span className="text-gray-400 block text-[10px] uppercase">{t('label_limit')}</span>
+                        <span className="text-gray-300 text-sm leading-tight break-all">{formatCurrency(tgt.amount)}</span>
                       </div>
                     </div>
                     <div className="h-2 w-full bg-gray-800 rounded-full overflow-hidden relative">
                       <div 
                         className={`h-full rounded-full transition-all duration-500 ${
-                          (t.currentAmount / t.amount) > 0.9 ? 'bg-red-500' : 'bg-purple-500'
+                          (tgt.currentAmount / tgt.amount) > 0.9 ? 'bg-red-500' : 'bg-purple-500'
                         }`}
-                        style={{ width: `${Math.min(100, (t.currentAmount / t.amount) * 100)}%` }}
+                        style={{ width: `${Math.min(100, (tgt.currentAmount / tgt.amount) * 100)}%` }}
                       />
                     </div>
                     <p className="text-[10px] text-gray-500 font-medium mt-2 text-right">
-                      Sisa Waktu: s/d {new Date(t.endDate).toLocaleDateString('id-ID')}
+                      {t('label_time_left')}: {t('label_until')} {new Date(tgt.endDate).toLocaleDateString()}
                     </p>
                   </div>
                 ))}
@@ -270,32 +291,32 @@ const Dashboard = () => {
               <h3 className="font-black text-white text-sm">{t('income_savings_target')}</h3>
             </div>
             
-            {dashboardData?.activeTargets?.filter((t: any) => t.type === 'income').length > 0 ? (
+            {dashboardData?.activeTargets?.filter((tgt: any) => tgt.type === 'income').length > 0 ? (
               <div className="flex flex-col gap-4">
-                {dashboardData.activeTargets.filter((t: any) => t.type === 'income').map((t: any) => (
-                  <div key={t.id} className="bg-[#1a2e22] rounded-lg p-4 border border-emerald-500/10">
+                {dashboardData.activeTargets.filter((tgt: any) => tgt.type === 'income').map((tgt: any) => (
+                  <div key={tgt.id} className="bg-[#1a2e22] rounded-lg p-4 border border-emerald-500/10">
                     <div className="flex justify-between items-start mb-2">
-                      <h4 className="text-emerald-400 font-bold text-sm">{t.name}</h4>
-                      <button onClick={() => handleDeleteTarget(t.id)} className="text-gray-500 hover:text-red-400"><Trash2 size={14}/></button>
+                      <h4 className="text-emerald-400 font-bold text-sm">{tgt.name}</h4>
+                      <button onClick={() => handleDeleteTarget(tgt.id)} className="text-gray-500 hover:text-red-400"><Trash2 size={14}/></button>
                     </div>
                     <div className="flex justify-between items-end mb-2 text-sm font-bold">
                       <div>
-                        <span className="text-emerald-500/70 block text-[10px] uppercase">Terkumpul</span>
-                        <span className="text-white text-base">{formatCurrency(t.currentAmount)}</span>
+                        <span className="text-emerald-500/70 block text-[10px] uppercase">{t('label_collected')}</span>
+                        <span className="text-white text-sm leading-tight break-all">{formatCurrency(tgt.currentAmount)}</span>
                       </div>
                       <div className="text-right">
-                        <span className="text-emerald-500/70 block text-[10px] uppercase">Target</span>
-                        <span className="text-gray-300">{formatCurrency(t.amount)}</span>
+                        <span className="text-emerald-500/70 block text-[10px] uppercase">{t('label_target')}</span>
+                        <span className="text-gray-300 text-sm leading-tight break-all">{formatCurrency(tgt.amount)}</span>
                       </div>
                     </div>
                     <div className="h-2 w-full bg-gray-900 rounded-full overflow-hidden relative border border-emerald-500/20">
                       <div 
                         className="h-full rounded-full transition-all duration-500 bg-emerald-500"
-                        style={{ width: `${Math.min(100, (t.currentAmount / t.amount) * 100)}%` }}
+                        style={{ width: `${Math.min(100, (tgt.currentAmount / tgt.amount) * 100)}%` }}
                       />
                     </div>
                     <p className="text-[10px] text-gray-500 font-medium mt-2 text-right">
-                      Sisa Waktu: s/d {new Date(t.endDate).toLocaleDateString('id-ID')}
+                      {t('label_time_left')}: {t('label_until')} {new Date(tgt.endDate).toLocaleDateString()}
                     </p>
                   </div>
                 ))}

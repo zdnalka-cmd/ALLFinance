@@ -21,7 +21,7 @@ const FALLBACK_COLORS = ['#c2410c', '#be185d', '#7e22ce', '#047857', '#b45309', 
 
 const AdminDashboard = () => {
   const { user } = useContext(AuthContext);
-  const { formatCurrency } = useContext(CurrencyContext);
+  const { formatCurrency, t } = useContext(CurrencyContext);
   const [stats, setStats] = useState({ totalUsers: 0 });
   const [usersList, setUsersList] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
@@ -62,7 +62,7 @@ const AdminDashboard = () => {
       setCategories(catRes.data);
     } catch (error) {
       console.error('Failed to fetch admin data:', error);
-      toast.error('Gagal memuat data admin');
+      toast.error(t('admin_load_failed'));
     } finally {
       setLoading(false);
     }
@@ -80,21 +80,46 @@ const AdminDashboard = () => {
   const handleSuspend = async (userId: string, isSuspended: boolean) => {
     try {
       await axiosInstance.put(`/admin/users/${userId}/suspend`);
-      toast.success(`Akun berhasil di${isSuspended ? 'aktifkan' : 'tangguhkan'}`);
+      toast.success(isSuspended ? t('account_activated') : t('account_suspended'));
       fetchAdminData();
     } catch (error) {
-      toast.error('Gagal mengubah status akun');
+      toast.error(t('status_update_failed'));
     }
   };
 
   const handleDelete = async (userId: string) => {
-    if (!window.confirm('Yakin ingin menghapus akun ini secara permanen beserta semua transaksinya?')) return;
+    if (!window.confirm(t('delete_account_confirm'))) return;
     try {
       await axiosInstance.delete(`/admin/users/${userId}`);
-      toast.success('Akun berhasil dihapus');
+      toast.success(t('account_deleted'));
       fetchAdminData();
     } catch (error) {
-      toast.error('Gagal menghapus akun');
+      toast.error(t('account_delete_failed'));
+    }
+  };
+
+  const handleDeleteProfilePicture = async (userId: string) => {
+    if (!window.confirm(t('confirm_delete_profile_picture'))) return;
+    try {
+      await axiosInstance.delete(`/admin/users/${userId}/profile-picture`);
+      toast.success(t('profile_picture_deleted'));
+      fetchAdminData();
+    } catch (error) {
+      toast.error(t('profile_picture_delete_failed'));
+    }
+  };
+
+  const handleDeleteReceiptPhoto = async (receiptId: string) => {
+    if (!window.confirm(t('confirm_delete_receipt_photo'))) return;
+    try {
+      await axiosInstance.delete(`/admin/receipts/${receiptId}/photo`);
+      toast.success(t('receipt_photo_deleted'));
+      // refresh receipts
+      if (selectedUserReceipts) {
+        handleViewReceipts(selectedUserReceipts.id, selectedUserReceipts.name);
+      }
+    } catch (error) {
+      toast.error(t('receipt_photo_delete_failed'));
     }
   };
 
@@ -113,33 +138,33 @@ const AdminDashboard = () => {
       const res = await axiosInstance.get(`/admin/users/${userId}/receipts`);
       setUserReceipts(res.data);
     } catch (error) {
-      toast.error('Gagal memuat kwitansi pengguna');
+      toast.error(t('receipt_load_failed'));
     } finally {
       setLoadingReceipts(false);
     }
   };
 
   const handleReplySubmit = async (reportId: string) => {
-    if (!replyText.trim()) return toast.error('Teks balasan kosong');
+    if (!replyText.trim()) return toast.error(t('reply_empty'));
     try {
       await axiosInstance.put(`/admin/reports/${reportId}/reply`, { replyText });
-      toast.success('Balasan terkirim');
+      toast.success(t('reply_sent'));
       setReplyingTo(null);
       setReplyText('');
       fetchAdminData();
     } catch (error) {
-      toast.error('Gagal mengirim balasan');
+      toast.error(t('reply_failed'));
     }
   };
 
   const handleDeleteReport = async (reportId: string) => {
-    if (!window.confirm('Yakin ingin menghapus laporan ini?')) return;
+    if (!window.confirm(t('delete_report_confirm'))) return;
     try {
       await axiosInstance.delete(`/admin/reports/${reportId}`);
-      toast.success('Laporan berhasil dihapus');
+      toast.success(t('report_deleted'));
       fetchAdminData();
     } catch (error) {
-      toast.error('Gagal menghapus laporan');
+      toast.error(t('report_delete_failed'));
     }
   };
 
@@ -156,12 +181,32 @@ const AdminDashboard = () => {
     setCurrentPage(1);
   }, [searchQuery]);
 
+  const CustomBarTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0];
+      const color = EXPENSE_CAT_COLORS[data.payload.name.toLowerCase()] || FALLBACK_COLORS[categories.findIndex(c => c.name === data.payload.name) % FALLBACK_COLORS.length] || '#8b5cf6';
+      
+      return (
+        <div className="rounded-xl border border-white/10 bg-black/80 p-3 shadow-xl shadow-purple-900/20 backdrop-blur-md">
+          <p className="text-sm font-bold text-gray-200 capitalize mb-1 flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}` }}></span>
+            {label}
+          </p>
+          <p className="text-xs font-medium" style={{ color: color }}>
+            {data.value} <span className="text-gray-400">transaksi</span>
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div className="mx-auto max-w-7xl font-sans pb-10 space-y-6">
+    <div className="mx-auto max-w-7xl font-sans pb-10 space-y-5">
       {/* Header */}
-      <div className="flex flex-col gap-3 border-b border-blue-500/10 pb-5">
-        <h1 className="text-3xl font-black text-white tracking-tight">Admin Dashboard</h1>
-        <p className="text-sm text-gray-400 font-bold">Selamat datang kembali, {user?.name}</p>
+      <div className="flex flex-col gap-2 border-b border-blue-500/10 pb-4">
+        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Admin Dashboard</h1>
+        <p className="text-xs sm:text-sm text-gray-400 font-bold">Selamat datang kembali, {user?.name}</p>
       </div>
 
       {loading ? (
@@ -169,35 +214,35 @@ const AdminDashboard = () => {
       ) : (
         <>
           {/* Top Stats */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-xl border border-blue-500/20 bg-[#0f172a] p-5 shadow-sm transition-all hover:border-blue-500/50">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
-                  <Users size={20} />
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div className="rounded-xl border border-blue-500/20 bg-[#0f172a] p-4 sm:p-5 shadow-sm transition-all hover:border-blue-500/50">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
+                  <Users size={16} />
                 </div>
-                <h3 className="text-sm font-bold text-gray-300 uppercase tracking-wider">Total Pengguna</h3>
+                <h3 className="text-xs font-bold text-gray-300 uppercase tracking-wider">Total Pengguna</h3>
               </div>
-              <p className="text-3xl font-black text-white">{stats.totalUsers}</p>
+              <p className="text-2xl sm:text-3xl font-black text-white">{stats.totalUsers}</p>
             </div>
 
-            <div className="rounded-xl border border-indigo-500/20 bg-[#0f172a] p-5 shadow-sm transition-all hover:border-indigo-500/50">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400">
-                  <Activity size={20} />
+            <div className="rounded-xl border border-indigo-500/20 bg-[#0f172a] p-4 sm:p-5 shadow-sm transition-all hover:border-indigo-500/50">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400">
+                  <Activity size={16} />
                 </div>
-                <h3 className="text-sm font-bold text-gray-300 uppercase tracking-wider">Status Sistem</h3>
+                <h3 className="text-xs font-bold text-gray-300 uppercase tracking-wider">Status Sistem</h3>
               </div>
-              <p className="text-xl font-black text-emerald-400 mt-2">Online & Stabil</p>
+              <p className="text-base sm:text-xl font-black text-emerald-400">Online & Stabil</p>
             </div>
 
-            <div className="rounded-xl border border-rose-500/20 bg-[#0f172a] p-5 shadow-sm transition-all hover:border-rose-500/50">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-500/10 text-rose-400">
-                  <MessageSquare size={20} />
+            <div className="rounded-xl border border-rose-500/20 bg-[#0f172a] p-4 sm:p-5 shadow-sm transition-all hover:border-rose-500/50 col-span-2 sm:col-span-1">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-rose-500/10 text-rose-400">
+                  <MessageSquare size={16} />
                 </div>
-                <h3 className="text-sm font-bold text-gray-300 uppercase tracking-wider">Total Laporan</h3>
+                <h3 className="text-xs font-bold text-gray-300 uppercase tracking-wider">Total Laporan</h3>
               </div>
-              <p className="text-3xl font-black text-white">{reports.length}</p>
+              <p className="text-2xl sm:text-3xl font-black text-white">{reports.length}</p>
             </div>
           </div>
 
@@ -233,21 +278,27 @@ const AdminDashboard = () => {
               </h2>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={categories} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
-                    <XAxis type="number" stroke="#64748b" fontSize={12} />
-                    <YAxis dataKey="name" type="category" stroke="#64748b" fontSize={12} width={100} />
-                    <RechartsTooltip
-                      contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#fff' }}
-                      itemStyle={{ color: '#e2e8f0' }}
-                      formatter={(value: any) => [`${value} kali digunakan`, 'Total Penggunaan']}
-                    />
-                    <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                  <BarChart data={categories} layout="vertical" margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
+                    <defs>
                       {categories.map((entry, index) => {
                         const key = entry.name.toLowerCase();
                         const color = EXPENSE_CAT_COLORS[key] || FALLBACK_COLORS[index % FALLBACK_COLORS.length];
-                        return <Cell key={`cell-${index}`} fill={color} />;
+                        return (
+                          <linearGradient key={`gradient-${index}`} id={`colorUv-${index}`} x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor={color} stopOpacity={0.8} />
+                            <stop offset="100%" stopColor={color} stopOpacity={1} />
+                          </linearGradient>
+                        );
                       })}
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} vertical={true} opacity={0.4} />
+                    <XAxis type="number" stroke="#475569" fontSize={11} axisLine={false} tickLine={false} />
+                    <YAxis dataKey="name" type="category" stroke="#94a3b8" fontSize={11} width={100} axisLine={false} tickLine={false} tickFormatter={(val) => val.length > 15 ? val.substring(0, 15) + '...' : val} style={{ textTransform: 'capitalize' }} />
+                    <RechartsTooltip cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }} content={<CustomBarTooltip />} />
+                    <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={16}>
+                      {categories.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={`url(#colorUv-${index})`} style={{ filter: `drop-shadow(0px 0px 4px ${EXPENSE_CAT_COLORS[entry.name.toLowerCase()] || FALLBACK_COLORS[index % FALLBACK_COLORS.length]}40)` }} />
+                      ))}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -278,14 +329,14 @@ const AdminDashboard = () => {
                 </div>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm text-gray-400">
+                <table className="w-full text-left text-sm text-gray-400 responsive-table">
                   <thead className="bg-[#0a0f1a] text-xs uppercase text-gray-500 border-b border-blue-500/10">
                     <tr>
-                      <th className="px-4 py-3 font-bold">Pengguna</th>
-                      <th className="px-4 py-3 font-bold">Status</th>
-                      <th className="px-4 py-3 font-bold">Total Pemasukan</th>
-                      <th className="px-4 py-3 font-bold">Total Pengeluaran</th>
-                      <th className="px-4 py-3 font-bold text-right">Aksi</th>
+                      <th className="px-3 sm:px-4 py-3 font-bold">Pengguna</th>
+                      <th className="px-3 sm:px-4 py-3 font-bold hidden sm:table-cell">Status</th>
+                      <th className="px-3 sm:px-4 py-3 font-bold hidden md:table-cell">Total Pemasukan</th>
+                      <th className="px-3 sm:px-4 py-3 font-bold hidden md:table-cell">Total Pengeluaran</th>
+                      <th className="px-3 sm:px-4 py-3 font-bold text-right">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -298,24 +349,22 @@ const AdminDashboard = () => {
                     ) : (
                       paginatedUsers.map((u) => (
                         <tr key={u.id} className="border-b border-blue-500/5 hover:bg-blue-500/5 transition-colors">
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-3">
-                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-black text-white bg-cover bg-center overflow-hidden"
+                          <td className="px-3 sm:px-4 py-3">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full text-sm font-black text-white bg-cover bg-center overflow-hidden"
                                 style={{
                                   backgroundImage: u.profile_picture ? `url(${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${u.profile_picture})` : 'linear-gradient(135deg, #6d28d9, #863bff)',
-                                  backgroundPosition: 'center',
-                                  backgroundSize: 'cover',
-                                  backgroundRepeat: 'no-repeat',
+                                  backgroundPosition: 'center', backgroundSize: 'cover', backgroundRepeat: 'no-repeat',
                                 }}>
                                 {!u.profile_picture && (u.name?.charAt(0)?.toUpperCase() || 'U')}
                               </div>
                               <div>
-                                <p className="font-bold text-gray-200">{u.name}</p>
-                                <p className="text-xs text-gray-500">{u.email}</p>
+                                <p className="font-bold text-gray-200 text-xs sm:text-sm">{u.name}</p>
+                                <p className="text-[10px] sm:text-xs text-gray-500 truncate max-w-[120px] sm:max-w-none">{u.email}</p>
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-3 sm:px-4 py-3 hidden sm:table-cell">
                             <div className="flex flex-col gap-1">
                               {u.is_suspended ? (
                                 <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-rose-500/10 px-2 py-0.5 text-xs font-bold text-rose-500">
@@ -332,20 +381,29 @@ const AdminDashboard = () => {
                               )}
                             </div>
                           </td>
-                          <td className="px-4 py-3 font-medium text-emerald-400">
+                          <td className="px-3 sm:px-4 py-3 font-medium text-emerald-400 hidden md:table-cell">
                             <div className="flex items-center gap-1">
                               <TrendingUp size={14} />
-                              {formatCurrency(u.totalIncome)}
+                              {new Intl.NumberFormat(u.currency === 'USD' ? 'en-US' : u.currency === 'JPY' ? 'ja-JP' : u.currency === 'SGD' ? 'en-SG' : u.currency === 'EUR' ? 'en-IE' : u.currency === 'GBP' ? 'en-GB' : u.currency === 'MYR' ? 'ms-MY' : 'id-ID', { style: 'currency', currency: u.currency || 'IDR', maximumFractionDigits: (u.currency === 'IDR' || u.currency === 'JPY') ? 0 : 2 }).format(u.totalIncome)}
                             </div>
                           </td>
-                          <td className="px-4 py-3 font-medium text-rose-400">
+                          <td className="px-3 sm:px-4 py-3 font-medium text-rose-400 hidden md:table-cell">
                             <div className="flex items-center gap-1">
                               <TrendingDown size={14} />
-                              {formatCurrency(u.totalExpense)}
+                              {new Intl.NumberFormat(u.currency === 'USD' ? 'en-US' : u.currency === 'JPY' ? 'ja-JP' : u.currency === 'SGD' ? 'en-SG' : u.currency === 'EUR' ? 'en-IE' : u.currency === 'GBP' ? 'en-GB' : u.currency === 'MYR' ? 'ms-MY' : 'id-ID', { style: 'currency', currency: u.currency || 'IDR', maximumFractionDigits: (u.currency === 'IDR' || u.currency === 'JPY') ? 0 : 2 }).format(u.totalExpense)}
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-right">
-                            <div className="flex justify-end gap-2">
+                          <td className="px-3 sm:px-4 py-3 text-right">
+                            <div className="flex justify-end gap-1 sm:gap-2">
+                              {u.profile_picture && (
+                                <button
+                                  onClick={() => handleDeleteProfilePicture(u.id)}
+                                  className="rounded p-1.5 transition-colors bg-orange-500/10 text-orange-400 hover:bg-orange-500/20"
+                                  title={t('delete_profile_picture')}
+                                >
+                                  <X size={16} />
+                                </button>
+                              )}
                               <button
                                 onClick={() => handleViewReceipts(u.id, u.name)}
                                 className="rounded p-1.5 transition-colors bg-blue-500/10 text-blue-400 hover:bg-blue-500/20"
@@ -529,10 +587,17 @@ const AdminDashboard = () => {
                         style={{ backgroundImage: `url(${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${receipt.receipt})` }}
                         onClick={() => setZoomedImage(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${receipt.receipt}`)}
                       >
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
                           <span className="text-white font-bold bg-black/60 px-3 py-1.5 rounded-lg backdrop-blur-sm text-sm">
                             Perbesar Foto
                           </span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeleteReceiptPhoto(receipt.id); }}
+                            className="bg-rose-600/90 text-white font-bold px-3 py-1.5 rounded-lg backdrop-blur-sm text-sm flex items-center gap-1 hover:bg-rose-500 transition-colors shadow-lg"
+                            title={t('delete_receipt_photo')}
+                          >
+                            <Trash2 size={14} /> Hapus
+                          </button>
                         </div>
                       </div>
                       <div className="p-4 flex flex-col gap-1.5">

@@ -32,11 +32,13 @@
   * {
     @apply border-border;
   }
-  body {
-    @apply bg-background text-foreground;
+  html, body {
+    @apply bg-background text-foreground overflow-x-hidden;
     font-family: 'Inter', system-ui, sans-serif;
     background-color: #0a0a0f;
     color: #f0f0f5;
+    width: 100%;
+    position: relative;
   }
   input, select, textarea {
     @apply bg-[#0d0d1a] text-white placeholder-gray-500;
@@ -107,3 +109,52 @@ main > * {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* ── Mobile Bottom Navigation ── */
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  background: rgba(15, 15, 26, 0.95);
+  border-top: 1px solid rgba(134, 59, 255, 0.2);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+
+/* ── Safe area padding for mobile ── */
+.pb-safe {
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
+.pb-nav {
+  padding-bottom: 4.5rem;
+}
+@media (min-width: 640px) {
+  .pb-nav {
+    padding-bottom: 0;
+  }
+}
+
+/* ── Touch-friendly buttons ── */
+@media (max-width: 640px) {
+  button, a[role="button"] {
+    min-height: 36px;
+  }
+}
+
+/* ── Horizontal scroll indicator ── */
+.scroll-hint::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  background: linear-gradient(to left, rgba(10,10,15,0.8), transparent);
+  pointer-events: none;
+}
+

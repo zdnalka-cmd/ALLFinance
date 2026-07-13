@@ -17,7 +17,7 @@ const AccountJournal = () => {
         setJournals(res.data);
       } catch (error) {
         console.error(error);
-        toast.error('Gagal memuat jurnal akun');
+        toast.error(t('failed_load_data'));
       } finally {
         setLoading(false);
       }
@@ -181,32 +181,38 @@ const AccountJournal = () => {
       </div>
 
       {/* Monthly Summary */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-950/60 to-[#111120] p-5 group">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
+        <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-950/60 to-[#111120] p-3 sm:p-5 group">
           <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-emerald-500/10 blur-2xl group-hover:bg-emerald-500/20 transition-all duration-500" />
-          <div className="flex items-center gap-2 mb-3 relative z-10">
-            <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-              <TrendingUp size={14} className="text-emerald-400" />
+          <div className="flex items-center gap-1.5 mb-2 sm:mb-3 relative z-10">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
+              <TrendingUp size={12} className="text-emerald-400" />
             </div>
-            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">{t('income')}</p>
+            <p className="text-[9px] sm:text-xs text-gray-400 font-bold uppercase tracking-wider truncate">{t('income')}</p>
           </div>
-          <h3 className="text-xl font-black text-emerald-400 relative z-10 truncate">{formatCurrency(monthlyStats.income)}</h3>
-          <p className="text-[10px] text-gray-600 font-medium mt-1 relative z-10">{t('month_word')} {monthNames[month]}</p>
+          <h3 className="font-black text-emerald-400 relative z-10 leading-tight break-all"
+            style={{ fontSize: formatCurrency(monthlyStats.income).length > 10 ? '0.7rem' : formatCurrency(monthlyStats.income).length > 7 ? '0.875rem' : '1.125rem' }}>
+            {formatCurrency(monthlyStats.income)}
+          </h3>
+          <p className="text-[9px] text-gray-600 font-medium mt-1 relative z-10 hidden sm:block">{t('month_word')} {monthNames[month]}</p>
         </div>
 
-        <div className="relative overflow-hidden rounded-2xl border border-rose-500/20 bg-gradient-to-br from-rose-950/60 to-[#111120] p-5 group">
+        <div className="relative overflow-hidden rounded-2xl border border-rose-500/20 bg-gradient-to-br from-rose-950/60 to-[#111120] p-3 sm:p-5 group">
           <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-rose-500/10 blur-2xl group-hover:bg-rose-500/20 transition-all duration-500" />
-          <div className="flex items-center gap-2 mb-3 relative z-10">
-            <div className="w-7 h-7 rounded-lg bg-rose-500/20 flex items-center justify-center">
-              <TrendingDown size={14} className="text-rose-400" />
+          <div className="flex items-center gap-1.5 mb-2 sm:mb-3 relative z-10">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-rose-500/20 flex items-center justify-center shrink-0">
+              <TrendingDown size={12} className="text-rose-400" />
             </div>
-            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">{t('expense')}</p>
+            <p className="text-[9px] sm:text-xs text-gray-400 font-bold uppercase tracking-wider truncate">{t('expense')}</p>
           </div>
-          <h3 className="text-xl font-black text-rose-400 relative z-10 truncate">{formatCurrency(monthlyStats.expense)}</h3>
-          <p className="text-[10px] text-gray-600 font-medium mt-1 relative z-10">{t('month_word')} {monthNames[month]}</p>
+          <h3 className="font-black text-rose-400 relative z-10 leading-tight break-all"
+            style={{ fontSize: formatCurrency(monthlyStats.expense).length > 10 ? '0.7rem' : formatCurrency(monthlyStats.expense).length > 7 ? '0.875rem' : '1.125rem' }}>
+            {formatCurrency(monthlyStats.expense)}
+          </h3>
+          <p className="text-[9px] text-gray-600 font-medium mt-1 relative z-10 hidden sm:block">{t('month_word')} {monthNames[month]}</p>
         </div>
 
-        <div className={`relative overflow-hidden rounded-2xl border p-5 group ${
+        <div className={`relative overflow-hidden rounded-2xl border p-3 sm:p-5 group ${
           monthlyStats.net >= 0
             ? 'border-purple-500/20 bg-gradient-to-br from-purple-950/60 to-[#111120]'
             : 'border-rose-500/20 bg-gradient-to-br from-rose-950/40 to-[#111120]'
@@ -214,18 +220,24 @@ const AccountJournal = () => {
           <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full blur-2xl transition-all duration-500 ${
             monthlyStats.net >= 0 ? 'bg-purple-500/10 group-hover:bg-purple-500/20' : 'bg-rose-500/10 group-hover:bg-rose-500/20'
           }`} />
-          <div className="flex items-center gap-2 mb-3 relative z-10">
-            <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+          <div className="flex items-center gap-1.5 mb-2 sm:mb-3 relative z-10">
+            <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center shrink-0 ${
               monthlyStats.net >= 0 ? 'bg-purple-500/20' : 'bg-rose-500/20'
             }`}>
-              <Wallet size={14} className={monthlyStats.net >= 0 ? 'text-purple-400' : 'text-rose-400'} />
+              <Wallet size={12} className={monthlyStats.net >= 0 ? 'text-purple-400' : 'text-rose-400'} />
             </div>
-            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">{t('net_balance')}</p>
+            <p className="text-[9px] sm:text-xs text-gray-400 font-bold uppercase tracking-wider truncate">{t('net_balance')}</p>
           </div>
-          <h3 className={`text-xl font-black relative z-10 truncate ${monthlyStats.net >= 0 ? 'text-white' : 'text-rose-400'}`}>
-            {monthlyStats.net < 0 ? '-' : ''}{formatCurrency(Math.abs(monthlyStats.net))}
-          </h3>
-          <p className="text-[10px] text-gray-600 font-medium mt-1 relative z-10">
+          {(() => {
+            const netStr = formatCurrency(Math.abs(monthlyStats.net));
+            return (
+              <h3 className={`font-black relative z-10 leading-tight break-all ${monthlyStats.net >= 0 ? 'text-white' : 'text-rose-400'}`}
+                style={{ fontSize: netStr.length > 10 ? '0.7rem' : netStr.length > 7 ? '0.875rem' : '1.125rem' }}>
+                {monthlyStats.net < 0 ? '-' : ''}{netStr}
+              </h3>
+            );
+          })()}
+          <p className="text-[9px] text-gray-600 font-medium mt-1 relative z-10 hidden sm:block">
             {monthlyStats.net >= 0 ? `✓ ${t('surplus')}` : `⚠ ${t('deficit')}`}
           </p>
         </div>

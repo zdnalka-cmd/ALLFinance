@@ -1,5 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
+import toast from 'react-hot-toast';
 import axiosInstance from '../api/axiosInstance';
 import { AuthContext } from '../context/AuthContext';
 
@@ -12,10 +14,22 @@ const Logo = () => (
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const reason = localStorage.getItem('logout_reason');
+    if (reason === 'deleted') {
+      toast.error('Akun Anda telah dihapus secara permanen.');
+      localStorage.removeItem('logout_reason');
+    } else if (reason === 'expired') {
+      toast.error('Sesi Anda telah berakhir, silakan masuk kembali.');
+      localStorage.removeItem('logout_reason');
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,15 +165,24 @@ const Login = () => {
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
                 Kata Sandi
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-gray-600 font-medium outline-none transition-all focus:border-purple-500/60 focus:bg-white/8 focus:ring-1 focus:ring-purple-500/30"
-                style={{ backdropFilter: 'blur(4px)' }}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 pr-12 text-sm text-white placeholder-gray-600 font-medium outline-none transition-all focus:border-purple-500/60 focus:bg-white/8 focus:ring-1 focus:ring-purple-500/30"
+                  style={{ backdropFilter: 'blur(4px)' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <button

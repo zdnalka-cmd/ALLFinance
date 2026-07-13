@@ -12,7 +12,9 @@ router.get('/reports', protect, adminController.getReports);
 // New features
 router.put('/users/:id/suspend', protect, adminController.suspendUser);
 router.delete('/users/:id', protect, adminController.deleteUser);
+router.delete('/users/:id/profile-picture', protect, adminController.deleteUserProfilePicture);
 router.get('/users/:id/receipts', protect, adminController.getUserReceipts);
+router.delete('/receipts/:id/photo', protect, adminController.deleteReceiptPhoto);
 router.get('/trends', protect, adminController.getTrends);
 router.get('/categories/popular', protect, adminController.getPopularCategories);
 router.put('/reports/:id/reply', protect, adminController.replyToReport);

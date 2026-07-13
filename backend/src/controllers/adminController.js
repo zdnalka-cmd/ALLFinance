@@ -1,4 +1,6 @@
 const prisma = require('../prismaClient');
+const fs = require('fs');
+const path = require('path');
 
 exports.getAdminStats = async (req, res) => {
   try {
@@ -24,6 +26,7 @@ exports.getUsers = async (req, res) => {
         last_active: true,
         is_suspended: true,
         profile_picture: true,
+        currency: true,
         incomes: { select: { amount: true } },
         expenses: { select: { amount: true } }
       }
@@ -37,6 +40,7 @@ exports.getUsers = async (req, res) => {
         name: user.name,
         email: user.email,
         profile_picture: user.profile_picture,
+        currency: user.currency,
         last_active: user.last_active,
         is_suspended: user.is_suspended,
         totalIncome,
@@ -110,6 +114,76 @@ exports.deleteUser = async (req, res) => {
     await prisma.user.delete({ where: { id: req.params.id } });
     res.json({ message: 'User deleted' });
   } catch (error) {
+    res.status(500).json({ error: 'Internal error' });
+  }
+};
+
+exports.deleteUserProfilePicture = async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!user || !user.profile_picture) {
+      return res.status(404).json({ message: 'Profile picture not found' });
+    }
+
+    // Attempt to delete the file
+    const filePath = path.join(__dirname, '../../', user.profile_picture);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    await prisma.user.update({
+      where: { id: req.params.id },
+      data: { profile_picture: null }
+    });
+
+    // Notify user
+    await prisma.notification.create({
+      data: {
+        user_id: user.id,
+        message: 'Foto profil Anda telah dihapus oleh Admin karena dianggap tidak pantas.',
+        type: 'admin_action'
+      }
+    });
+
+    res.json({ message: 'Profile picture deleted' });
+  } catch (error) {
+    console.error('Error deleting profile picture:', error);
+    res.status(500).json({ error: 'Internal error' });
+  }
+};
+
+exports.deleteReceiptPhoto = async (req, res) => {
+  try {
+    const expense = await prisma.expense.findUnique({ where: { id: req.params.id } });
+    if (!expense || !expense.receipt) {
+      return res.status(404).json({ message: 'Receipt photo not found' });
+    }
+
+    // Attempt to delete the file
+    const filePath = path.join(__dirname, '../../', expense.receipt);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    await prisma.expense.update({
+      where: { id: req.params.id },
+      data: { receipt: null }
+    });
+
+    // Notify user
+    if (expense.user_id) {
+      await prisma.notification.create({
+        data: {
+          user_id: expense.user_id,
+          message: 'Foto kwitansi pada salah satu pengeluaran Anda telah dihapus oleh Admin karena dianggap tidak pantas.',
+          type: 'admin_action'
+        }
+      });
+    }
+
+    res.json({ message: 'Receipt photo deleted' });
+  } catch (error) {
+    console.error('Error deleting receipt photo:', error);
     res.status(500).json({ error: 'Internal error' });
   }
 };

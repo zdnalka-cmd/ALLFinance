@@ -8,6 +8,8 @@ interface User {
   role: string;
   dashboard_name?: string;
   profile_picture?: string;
+  currency?: string;
+  is_suspended?: boolean;
 }
 
 interface AuthContextType {

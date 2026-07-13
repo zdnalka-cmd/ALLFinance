@@ -75,7 +75,9 @@ const login = async (req, res) => {
         email: user.email,
         role: user.role,
         dashboard_name: user.dashboard_name,
-        profile_picture: user.profile_picture
+        profile_picture: user.profile_picture,
+        currency: user.currency,
+        is_suspended: user.is_suspended
       }
     });
   } catch (error) {
@@ -88,7 +90,7 @@ const getMe = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
-      select: { id: true, name: true, email: true, role: true, dashboard_name: true, profile_picture: true }
+      select: { id: true, name: true, email: true, role: true, dashboard_name: true, profile_picture: true, currency: true, is_suspended: true }
     });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -102,14 +104,14 @@ const getMe = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { dashboard_name } = req.body;
+    const { dashboard_name, currency } = req.body;
     const user = await prisma.user.update({
       where: { id: req.user.id },
-      data: { dashboard_name }
+      data: { dashboard_name, currency }
     });
     res.status(200).json({
       message: 'Profile updated successfully',
-      user: { id: user.id, name: user.name, email: user.email, role: user.role, dashboard_name: user.dashboard_name, profile_picture: user.profile_picture }
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, dashboard_name: user.dashboard_name, profile_picture: user.profile_picture, currency: user.currency }
     });
   } catch (error) {
     console.error('Update profile error:', error);
