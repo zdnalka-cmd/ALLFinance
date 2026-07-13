@@ -7,16 +7,11 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '../../uploads/'));
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'profile-' + uniqueSuffix + path.extname(file.originalname));
-  }
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
-const upload = multer({ storage: storage });
 
 router.post('/register', register);
 router.post('/login', login);
@@ -27,14 +22,17 @@ router.post('/profile/upload', authMiddleware, upload.single('profile_picture'),
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
-    const fileUrl = `/uploads/${req.file.filename}`;
+    
+    // Convert to base64 string
+    const base64Image = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+
     // Update the user's profile_picture in db
     const prisma = require('../prismaClient');
     await prisma.user.update({
       where: { id: req.user.id },
-      data: { profile_picture: fileUrl }
+      data: { profile_picture: base64Image }
     });
-    res.json({ message: 'Profile picture uploaded successfully', url: fileUrl });
+    res.json({ message: 'Profile picture uploaded successfully', url: base64Image });
   } catch (error) {
     console.error('Error uploading profile picture:', error);
     res.status(500).json({ message: 'Error uploading profile picture' });
